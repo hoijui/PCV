@@ -1,0 +1,105 @@
+\documentclass[a4paper,headings=small]{scrartcl}
+\KOMAoptions{DIV=12}
+
+\usepackage[utf8x]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{listings}
+
+% define style of numbering
+\numberwithin{equation}{section} % use separate numbering per section
+\numberwithin{figure}{section}   % use separate numbering per section
+
+% instead of using indents to denote a new paragraph, we add space before it
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{10pt plus 1pt minus 1pt}
+
+\title{Photogrammetric Computer Vision - WS12/13 \\ Excercise 1 \\ \emph{Load, Modify and Save Images with OpenCV}}
+\author{Team a: Marcus Grum, Robin Vobruba, Markus Pannwitz, Jens Jawer}
+\date{\today}
+
+\pdfinfo{%
+  /Title    (Photogrammetric Computer Vision - WS12/13 - Excercise 1 - Load, Modify and Save Images with OpenCV)
+  /Author   (Team a: Marcus Grum, Robin Vobruba, Markus Pannwitz, Jens Jawer)
+  /Creator  ()
+  /Producer ()
+  /Subject  ()
+  /Keywords ()
+}
+
+% Simple picture reference
+%   Usage: \image{#1}{#2}{#3}
+%     #1: file-name of the image
+%     #2: percentual width (decimal)
+%     #3: caption/description
+%
+%   Example:
+%     \image{myPicture}{0.8}{My huge house}
+%     See fig. \ref{fig:myPicture}.
+\newcommand{\image}[3]{
+	\begin{figure}[htbp]
+		\centering
+		\includegraphics[width=#2\textwidth]{#1}
+		\caption{#3}
+		\label{fig:#1}
+	\end{figure}
+}
+
+
+\begin{document}
+
+
+\maketitle
+
+
+
+\section{Points and Lines in the Plane}
+
+
+\subsection{}
+
+You would like to compute the connecting line between two 2D points. \newline
+What happens, if the two points are identical? \newline
+
+
+
+
+
+\subsection{}
+
+Where does the general line $ x cos \phi + y sin \phi = d$ intersect the line $(0, 0, 1)^T$
+given in homogeneous coordinates? \newline
+How can this point be interpreted? \newline
+
+
+\subsection{}
+
+Show that the horizon is a straight line by showing that three points
+on the horizon are always collinear. \newline
+
+
+\section{C++ and OpenCV}
+
+
+\subsection{}
+
+The two points $x = (2, 3)^T$ and $y = (-4, 5)^T$ are given. \newline
+a) Determine the connecting line $l$ between the two points. \newline
+b) Move $x$ and $y$ in the direction $t = (6, -7)^T$,
+rotate afterwards using the angle $\phi = 15°$ and finally
+scale with factor $\Lambda = 8$. \newline
+c) Accomplish the same operations with the line $l$. \newline
+
+
+
+
+
+
+\subsection{}
+
+Examine whether the transformed points $x’$ and $y’$ are
+on the transformed line $l’$. \newline
+
+
+\end{document}
