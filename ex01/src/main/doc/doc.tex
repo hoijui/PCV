@@ -1,0 +1,91 @@
+\documentclass[a4paper,headings=small]{scrartcl}
+\KOMAoptions{DIV=12}
+
+\usepackage[utf8x]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{listings}
+
+% define style of numbering
+\numberwithin{equation}{section} % use separate numbering per section
+\numberwithin{figure}{section}   % use separate numbering per section
+
+% instead of using indents to denote a new paragraph, we add space before it
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{10pt plus 1pt minus 1pt}
+
+\title{Programmatic Computer Vision - WS12/13 \\ Group E \\ Excercise 1 \\ \emph{Load, Modify and Save Images with OpenCV}}
+\author{Group E: Jens Jawer, Marcus Grum, Marcus Pannwitz, Robin Vobruba}
+\date{\today}
+
+\pdfinfo{%
+  /Title    (Programmatic Computer Vision - WS12/13 - Group E - Excercise 1 - Load, Modify and Save Images with OpenCV)
+  /Author   (Group E: Jens Jawer, Marcus Grum, Marcus Pannwitz, Robin Vobruba)
+  /Creator  ()
+  /Producer ()
+  /Subject  ()
+  /Keywords ()
+}
+
+% Simple picture reference
+%   Usage: \image{#1}{#2}{#3}
+%     #1: file-name of the image
+%     #2: percentual width (decimal)
+%     #3: caption/description
+%
+%   Example:
+%     \image{myPicture}{0.8}{My huge house}
+%     See fig. \ref{fig:myPicture}.
+\newcommand{\image}[3]{
+	\begin{figure}[htbp]
+		\centering
+		\includegraphics[width=#2\textwidth]{#1}
+		\caption{#3}
+		\label{fig:#1}
+	\end{figure}
+}
+
+
+\begin{document}
+
+
+\maketitle
+
+
+
+\section{Load, Modify and Save Images}
+
+
+\subsection{Load}
+
+You can see the plot of the original \emph{colored} picture as source
+in fig. \ref{fig:../../../target/input}.
+
+\image{../../../target/input}{0.5}{%
+		Original picture (\emph{colored}).}
+
+
+
+\subsection{Modify}
+
+The modification that shall impress our tutor will take the emph{colored} picture as source 
+and create a \emph{grey} version of it. Herefor, the following command uses the \emph{colored} 
+picture \emph{img} and creates the \emph{grey} image \emph{gray\_image}:
+\begin{lstlisting}
+cvtColor( img, gray_image, CV_RGB2GRAY ).
+\end{lstlisting}
+
+\newpage
+
+\subsection{Save}
+
+You can see the plot of the modified \emph{grey} picture as saved outcome
+in fig. \ref{fig:../../../target/result}.
+
+\image{../../../target/result}{0.5}{%
+		Modified picture (\emph{grey}).}
+
+
+
+\end{document}
