@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
 
     // check if image path was defined
     if (argc != 2){
-	cerr << "Usage: aia1 <path_to_image>" << endl;
+	cerr << "Usage: pcv1 <path_to_image>" << endl;
 	return -1;
     }
 
