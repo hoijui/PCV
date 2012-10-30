@@ -3,7 +3,8 @@
 // Author      : Ronny Haensch
 // Version     : 1.0
 // Copyright   : -
-// Description : load and display an image; do some basic linear algebra
+// Description : Load and display an image; do some basic linear algebra.
+// Group       : Marcus Grum (), Robin Vobruba (343773), Jens Jawer () und Marcus Pannwitz (343479)
 //============================================================================
 
 #include <iostream>
