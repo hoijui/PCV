@@ -8,13 +8,16 @@
 //============================================================================
 
 #include <iostream>
+#ifdef WIN32
+	#include "stdafx.h"
+#endif
 #include "opencv2/opencv.hpp"
 
 using namespace std;
 using namespace cv;
 
 // some function headers (see below)
-bool isPointOnLine(Mat& point, Mat& line, double eps = pow(10,-5));
+bool isPointOnLine(Mat& point, Mat& line, double eps = pow((double)10, (double)-5));
 void applyH(Mat& geomObj, Mat& H, Mat& result, string type);
 void getH(Mat& T, Mat& R, Mat& S, Mat& H);
 void getScaleMatrix(double lambda, Mat& S);
@@ -39,8 +42,8 @@ int main(int argc, char** argv) {
 	// load image as gray-scale, path in argv[1]
 	cout << "Load image: start" << endl;
 	Mat inputImage;
-	// TODO
-	// inputImage = ???
+
+	inputImage = imread( argv[1]);
 	if (!inputImage.data) {
 		cerr << "ERROR: image could not be loaded from " << argv[1] << endl;
 	} else {
@@ -58,6 +61,7 @@ int main(int argc, char** argv) {
 	Mat x(2, 1, CV_32FC1);
 	x.at<float>(0, 0) = 2;
 	x.at<float>(1, 0) = 3;
+
 	Mat y(2, 1, CV_32FC1);
 	y.at<float>(0, 0) = -4;
 	y.at<float>(1, 0) = 5;
@@ -68,8 +72,10 @@ int main(int argc, char** argv) {
 	v1.at<float>(1, 0) = x.at<float>(1, 0);
 	v1.at<float>(2, 0) = 1;
 	Mat v2(3, 1, CV_32FC1);
-	// TODO
 	// define v2 as homogeneous version of y
+	v2.at<float>(0, 0) = y.at<float>(0, 0);
+	v2.at<float>(1, 0) = y.at<float>(1, 0);
+	v2.at<float>(2, 0) = 1;
 
 	// print points
 	cout << "point 1: " << v1.t() << "^T" << endl;
@@ -119,11 +125,13 @@ int main(int argc, char** argv) {
 	Mat v1_new;
 	applyH(v1, H, v1_new, "point");
 	cout << "new point 1: " << v1_new << "^T" << endl;
+
 	// transform second point y (and print it)
 	Mat v2_new;
 	applyH(v2, H, v2_new, "point");
 	cout << "new point 2: " << v2_new << "^T" << endl;
 	cout << endl;
+
 	// transform joining line (and print it)
 	Mat line_new;
 	applyH(line, H, line_new, "line");
@@ -145,6 +153,8 @@ int main(int argc, char** argv) {
 		cout << "second point does not lie on the line *oh oh*" << endl;
 	}
 
+	waitKey(0);
+
 	return 0;
 }
 
@@ -156,7 +166,13 @@ int main(int argc, char** argv) {
  */
 void getConnectingLine(Mat& p1, Mat& p2, Mat& line) {
 
-	// TODO
+	// init line
+	line = Mat::zeros(3, 1, CV_32FC1);
+
+	// Calculate the cross product to get the line, which intersects both points
+	line.at<float>(0, 0) = p1.at<float>(1, 0) * p2.at<float>(2, 0) - p1.at<float>(2, 0) * p2.at<float>(1, 0);
+	line.at<float>(1, 0) = p1.at<float>(2, 0) * p2.at<float>(0, 0) - p1.at<float>(0, 0) * p2.at<float>(2, 0);
+	line.at<float>(2, 0) = p1.at<float>(0, 0) * p2.at<float>(1, 0) - p1.at<float>(1, 0) * p2.at<float>(0, 0);
 }
 
 /**
@@ -167,10 +183,12 @@ void getConnectingLine(Mat& p1, Mat& p2, Mat& line) {
  */
 void getTranslMatrix(double dx, double dy, Mat& T) {
 
-	// init T
-	T = Mat::zeros(3,3, CV_32FC1);
+	// init T as identity matrix
+	T = Mat::eye(3, 3, CV_32FC1);
 
-	// TODO
+	// The translation is represented in the third column
+	T.at<float>(0, 2) = dx;
+	T.at<float>(1, 2) = dy;
 }
 
 /**
@@ -180,12 +198,16 @@ void getTranslMatrix(double dx, double dy, Mat& T) {
  */
 void getRotMatrix(double phi, Mat& R) {
 
-	// init R
-	R = Mat::zeros(3,3, CV_32FC1);
-	// transform degree to radian
-	phi = phi/180*CV_PI;
+	// init T as identity matrix
+	R = Mat::eye(3, 3, CV_32FC1);
 
-	// TODO
+	// transform degree to radian
+	phi = phi / 180 * CV_PI;
+
+	// Calculate the rotation values
+	R.at<float>(0, 0) = R.at<float>(1, 1) = (float)cos(phi);
+	R.at<float>(1, 0) = (float)sin(phi);
+	R.at<float>(0, 1) = -R.at<float>(1, 0);
 }
 
 /**
@@ -196,9 +218,10 @@ void getRotMatrix(double phi, Mat& R) {
 void getScaleMatrix(double lambda, Mat& S) {
 
 	// init S
-	S = Mat::zeros(3,3, CV_32FC1);
+	S = Mat::eye(3, 3, CV_32FC1);
 
-	// TODO
+	// The scaling is represented on main diagonal of S, except the last one (2, 2)
+	S.at<float>(0, 0) = S.at<float>(1, 1) = (float)lambda;
 }
 
 /**
@@ -211,9 +234,17 @@ void getScaleMatrix(double lambda, Mat& S) {
 void getH(Mat& T, Mat& R, Mat& S, Mat& H) {
 
 	// init H
-	H = Mat::zeros(3,3, CV_32FC1);
+	H = Mat::eye(3, 3, CV_32FC1);
 
-	// TODO
+	// Combine the matrices
+	// 1st - Rotation and Scaling
+	for (int i = 0; i < 4; i++) {
+		H.at<float>(i / 2, i % 2) = R.at<float>(i / 2, i % 2) * S.at<float>(i / 2, i % 2);
+	}
+
+	// 2nd - Translation
+	H.at<float>(0, 2) = T.at<float>(0, 2);
+	H.at<float>(1, 2) = T.at<float>(1, 2);
 }
 
 /**
@@ -225,17 +256,26 @@ void getH(Mat& T, Mat& R, Mat& S, Mat& H) {
  */
 void applyH(Mat& geomObj, Mat& H, Mat& result, string type) {
 
-	// if object is a point
+	// Init the result matrix
+	result = Mat::zeros(3, 1, CV_32FC1);
+
+	// Store temporary the transformation matrix
+	Mat Temp_H;
+
 	if (type.compare("point") == 0) {
-		// TODO
+		// if object is a point
+		Temp_H = H;
+	} else if (type.compare("line") == 0) {
+		// if object is a line
+		cv::transpose(H.inv(), Temp_H);
+	} else {
+		cerr << "ERROR: Do not know how to transform " << type << endl;
 		return;
 	}
-	// if object is a line
-	if (type.compare("line") == 0){
-		// TO DO !!!
-		return;
-	}
-	cerr << "ERROR: Do not know how to transform " << type << endl;
+
+	result.at<float>(0, 0) = geomObj.at<float>(0, 0) * Temp_H.at<float>(0, 0) + geomObj.at<float>(1, 0) * Temp_H.at<float>(0, 1) + geomObj.at<float>(2, 0) * Temp_H.at<float>(0, 2);
+	result.at<float>(1, 0) = geomObj.at<float>(0, 0) * Temp_H.at<float>(1, 0) + geomObj.at<float>(1, 0) * Temp_H.at<float>(1, 1) + geomObj.at<float>(2, 0) * Temp_H.at<float>(1, 2);
+	result.at<float>(2, 0) = geomObj.at<float>(0, 0) * Temp_H.at<float>(2, 0) + geomObj.at<float>(1, 0) * Temp_H.at<float>(2, 1) + geomObj.at<float>(2, 0) * Temp_H.at<float>(2, 2);
 }
 
 /**
@@ -246,5 +286,12 @@ void applyH(Mat& geomObj, Mat& H, Mat& result, string type) {
  */
 bool isPointOnLine(Mat& point, Mat& line, double eps) {
 
-	// TODO
+	// Calculate the distance between line and point
+	double Value = (double)(line.at<float>(0, 0) * point.at<float>(0, 0) + line.at<float>(1, 0) * point.at<float>(1, 0) + line.at<float>(2, 0) * point.at<float>(2, 0));
+
+	// Output of calculation result for debug
+	cout << "Check for \"Point in Line\":  Value (" << Value << ") | EPS (" << eps << ")" << endl;
+
+	// if distance is to large return false, else true
+	return (Value > eps) ? false : true;
 }
