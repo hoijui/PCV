@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
 	// TODO
 	// inputImage = ???
 	if (!inputImage.data) {
-		cout << "ERROR: image could not be loaded from " << argv[1] << endl;
+		cerr << "ERROR: image could not be loaded from " << argv[1] << endl;
 	} else {
 		cout << "Load image: done ( " << inputImage.rows << " x " << inputImage.cols << " )" << endl;
 	}
