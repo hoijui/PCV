@@ -86,12 +86,34 @@ on the horizon are always collinear. \newline
 
 The two points $x = (2, 3)^T$ and $y = (-4, 5)^T$ are given. \newline
 a) Determine the connecting line $l$ between the two points. \newline
+
+      $l=(-2,-6, 22)^T$
+
 b) Move $x$ and $y$ in the direction $t = (6, -7)^T$,
 rotate afterwards using the angle $\phi = 15°$ and finally
 scale with factor $\Lambda = 8$. \newline
+
+\[T= \left( \begin{array}{ccc}
+1 & 0 &  6 \\
+0 & 1 & -7 \\
+0 & 0 &  1  \end{array} \right)\] 
+
+\[R= \left( \begin{array}{ccc}
+  0.96592581 & -0.25881904 & 0 \\
+  0.25881904 &  0.96592581 & 0 \\
+  0          &  0          & 1  \end{array} \right)\] 
+
+\[S= \left( \begin{array}{ccc}
+8 & 0 & 0 \\
+0 & 8 & 0 \\
+0 & 0 & 1 \end{array} \right)\] 
+
+$x'=x_{new}=(21.454813; 16.18222; 1)^T$ \newline
+$y'=y_{new}=(-24.909626; 31.637032; 1)^T$ \newline
+
 c) Accomplish the same operations with the line $l$. \newline
 
-
+      $l'=l_{new}=(-0.25881904; -0.77645713; 18.117714)^T$
 
 
 
@@ -101,5 +123,7 @@ c) Accomplish the same operations with the line $l$. \newline
 Examine whether the transformed points $x’$ and $y’$ are
 on the transformed line $l’$. \newline
 
+Considering a tollerance eps of (1e-05), both points $x_{new}$ and $y_{new}$ 
+are on the line $l_{new}$.
 
 \end{document}
