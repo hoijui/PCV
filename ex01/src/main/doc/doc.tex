@@ -15,12 +15,12 @@
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{10pt plus 1pt minus 1pt}
 
-\title{Photogrammetric Computer Vision - WS12/13 \\ Excercise 2 \\ \emph{Load, Modify and Save Images with OpenCV}}
+\title{Photogrammetric Computer Vision - WS12/13 \\ Excercise 1 \\ \emph{Load, Modify and Save Images with OpenCV}}
 \author{Team A: Marcus Grum, Robin Vobruba, Markus Pannwitz, Jens Jawer}
 \date{\today}
 
 \pdfinfo{%
-  /Title    (Photogrammetric Computer Vision - WS12/13 - Excercise 2 - Load, Modify and Save Images with OpenCV)
+  /Title    (Photogrammetric Computer Vision - WS12/13 - Excercise 1 - Load, Modify and Save Images with OpenCV)
   /Author   (Team A: Marcus Grum, Robin Vobruba, Markus Pannwitz, Jens Jawer)
   /Creator  ()
   /Producer ()
@@ -79,9 +79,8 @@ x_1 x_2 - x_2 x_1\end{array} \right) = (0, 0, 0)^T$.
 This result of $(0, 0, 0)^T$ can be used to defere that the points are identical.
 Also, the result is not a specific line but rather a set of lines.
 The resulting line is not unique:
-any line going through this one point is valid.
+any line going through one point, goes through the other point as well.
 
-When both points are at infinity, the resulting line would be a line at infinity called horizon.
 
 %http://www.google.de/url?sa=t&rct=j&q=computer%20vision%20intersection%20of%20two%20identical%20points&source=web&cd=2&ved=0CCcQFjAB&url=http%3A%2F%2Fwww.cvl.isy.liu.se%2Feducation%2Fgraduate%2Fgeometry-for-computer-vision%2Flectures%2FLecture1.pdf&ei=n-CUUIi-E8jMsgaw0oCICQ&usg=AFQjCNEJOniNcH8rmH2m05dvyGma7YPjPg&cad=rja
 %page 25
@@ -117,7 +116,8 @@ sin \phi\\
 All general lines (except the horizon) intersect with the horizon at infinity,
 at the vanishing point $x_{\infty}=(u,v,0)^T$.
 This result can be interpreted as follows:
-All parallel lines intersect at infinity at a proper vanishing point.
+All parallel lines intersect at infinity at a proper vanishing point, 
+but depend on the angle $\phi$.
 This fact was firstly used in works of realism art.
 
 \subsection{Question 3}
