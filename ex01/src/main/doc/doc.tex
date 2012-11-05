@@ -15,13 +15,13 @@
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{10pt plus 1pt minus 1pt}
 
-\title{Photogrammetric Computer Vision - WS12/13 \\ Excercise 1 \\ \emph{Load, Modify and Save Images with OpenCV}}
-\author{Team a: Marcus Grum, Robin Vobruba, Markus Pannwitz, Jens Jawer}
+\title{Photogrammetric Computer Vision - WS12/13 \\ Excercise 2 \\ \emph{Load, Modify and Save Images with OpenCV}}
+\author{Team A: Marcus Grum, Robin Vobruba, Markus Pannwitz, Jens Jawer}
 \date{\today}
 
 \pdfinfo{%
-  /Title    (Photogrammetric Computer Vision - WS12/13 - Excercise 1 - Load, Modify and Save Images with OpenCV)
-  /Author   (Team a: Marcus Grum, Robin Vobruba, Markus Pannwitz, Jens Jawer)
+  /Title    (Photogrammetric Computer Vision - WS12/13 - Excercise 2 - Load, Modify and Save Images with OpenCV)
+  /Author   (Team A: Marcus Grum, Robin Vobruba, Markus Pannwitz, Jens Jawer)
   /Creator  ()
   /Producer ()
   /Subject  ()
@@ -57,86 +57,96 @@
 \section{Points and Lines in the Plane}
 
 
-\subsection{}
-
-You would like to compute the connecting line between two 2D points. \newline
-What happens, if the two points are identical? \newline
+\subsection{Question 1}
 
 
-$l=x \times y=
+We would like to compute the connecting line between two 2D points. \\
+What happens, if the two points are identical? \\
+
+$l = x \times y =
 \left( \begin{array}{c}
-x_2y_3-x_3y_2\\
-x_3y_1-x_1y_3\\
-x_1y_2-x_2y_1\end{array} \right)$
-, where $y=x=(x_1,x_2,x_3)^T \newline
-l=x \times y=
+x_2 y_3 - x_3 y_2 \\
+x_3 y_1 - x_1 y_3 \\
+x_1 y_2 - x_2 y_1
+\end{array} \right)$
+, where $y = x = (x_1, x_2, x_3)^T \\
+l = x \times y =
 \left( \begin{array}{c}
-x_2x_3-x_3x_2\\
-x_3x_1-x_1x_3\\
-x_1x_2-x_2x_1\end{array} \right)=(0,0, 0)^T=0$. \newline
-This result of 0 can be used to flag that the points are identical, i.e., the result
-is not a specific line but rather a set of lines. The resulting line is not unique: 
-any line going through one point goes through the other as well.
+x_2 x_3 - x_3 x_2\\
+x_3 x_1 - x_1 x_3\\
+x_1 x_2 - x_2 x_1\end{array} \right) = (0, 0, 0)^T$.
+
+This result of $(0, 0, 0)^T$ can be used to defere that the points are identical.
+Also, the result is not a specific line but rather a set of lines.
+The resulting line is not unique:
+any line going through this one point is valid.
 
 When both points are at infinity, the resulting line would be a line at infinity called horizon.
 
 %http://www.google.de/url?sa=t&rct=j&q=computer%20vision%20intersection%20of%20two%20identical%20points&source=web&cd=2&ved=0CCcQFjAB&url=http%3A%2F%2Fwww.cvl.isy.liu.se%2Feducation%2Fgraduate%2Fgeometry-for-computer-vision%2Flectures%2FLecture1.pdf&ei=n-CUUIi-E8jMsgaw0oCICQ&usg=AFQjCNEJOniNcH8rmH2m05dvyGma7YPjPg&cad=rja
 %page 25
 
-\subsection{}
+\subsection{Question 2}
 
 Where does the general line $ x cos \phi + y sin \phi = d$ intersect the line $(0, 0, 1)^T$
-given in homogeneous coordinates? \newline
-How can this point be interpreted? \newline
+given in homogeneous coordinates?
 
-The general line $l_1$ can be implicitly written like the following: $l_1=(cos \phi, sin \phi, -d)^T$. \newline
-The second line $l_{2}=(0, 0, 1)^T$ can be seen as ideal line at infinity $l_{\infty}=(0, 0, c)^T$.
+How can this point be interpreted?
+
+The general line $l_1$ can be implicitly written like the following:
+$l_1=(cos \phi, sin \phi, -d)^T$.
+
+The second line, $l_{2}=(0, 0, 1)^T$, can be seen as ideal line at infinity $l_{\infty}=(0, 0, c)^T$.
 
 The intersection of the lines $l_1$ and $l_2$ in point $x_{1,2}$ can be found by calculating the cross product:
 
-$x_{1,2}=l_1 \times l_2=
+$x_{1,2} = l_1 \times l_2 =
 \left( \begin{array}{c}
-x_2y_3-x_3y_2\\
-x_3y_1-x_1y_3\\
-x_1y_2-x_2y_1\end{array} \right)=
+x_2 y_3 - x_3 y_2\\
+x_3 y_1 - x_1 y_3\\
+x_1 y_2 - x_2 y_1\end{array} \right) =
 \left( \begin{array}{c}
-sin \phi \cdot 1-(-d-0)\\
--d \cdot 0-cos \phi \cdot 1\\
-cos \phi \cdot 0-sin \phi \cdot 0\end{array} \right)=
+sin \phi \cdot 1 - (-d - 0)\\
+-d \cdot 0 - cos \phi \cdot 1\\
+cos \phi \cdot 0 - sin \phi \cdot 0\end{array} \right) =
 \left( \begin{array}{c}
 sin \phi\\
 -cos \phi\\
-0\end{array} \right)$ = $x_{\infty}$ \newline
+0\end{array} \right)$ = $x_{\infty}$
 
-All general lines (but the horizon) intersect with the horizon at infinity 
-at the vanishing point $x_{\infty}=(u,v,0)^T$. This result can be interpreted as follows:
-Every parallel lines intersect at infinity at an proper vanishing point.
+All general lines (except the horizon) intersect with the horizon at infinity,
+at the vanishing point $x_{\infty}=(u,v,0)^T$.
+This result can be interpreted as follows:
+All parallel lines intersect at infinity at a proper vanishing point.
 This fact was firstly used in works of realism art.
 
-\subsection{}
+\subsection{Question 3}
 
 Show that the horizon is a straight line by showing that three points
-on the horizon are always collinear. \newline
+on the horizon are always collinear.
 
-The horizon line $l_1$ can be implicitly written like the following: $l_1=(0, 0, c)^T$. \newline
-Three points on the horizon are the following ones: \newline
-$x_{1}=(u-1,v-1,0)^T$, \newline
-$x_{2}=(u,v,0)^T$, \newline
-$x_{3}=(u+1,v+1,0)^T$. \newline
+The horizon line $l_1$ can be implicitly written like the following: $l_1=(0, 0, c)^T$.
+
+Three points on the horizon are the following ones:
+
+$x_{1} = (u - 1, v - 1, 0)^T$, \\
+$x_{2} = (u, v, 0)^T$, \\
+$x_{3} = (u + 1, v + 1, 0)^T$. \\
 
 These points have to be collinear when lying on a straight line:
 
-$det[x_{1},x_{2},x_{3}]=
+$det[x_{1}, x_{2}, x_{3}] =
 det\left[ \begin{array}{ccc}
 u-1 & u & u+1\\
 v-1 & v & v+1\\
-0 & 0 & 0\end{array} \right]=...\newline
-...=(u-1) \cdot v \cdot0 - (u-1) \cdot (v+1) \cdot 0 + u \cdot (v+1) \cdot 0 - u \cdot (v-1) \cdot 0
-+(u+1) \cdot (v-1) \cdot 0 - (u+1) \cdot v \cdot 0=... \newline
-...=0.$ \newline
+0 & 0 & 0\end{array} \right] = 0 \\
+... = (u-1) \cdot v \cdot0 - (u-1) \cdot (v+1) \cdot 0 + u \cdot (v+1) \cdot 0 - u \cdot (v-1) \cdot 0
++(u+1) \cdot (v-1) \cdot 0 - (u+1) \cdot v \cdot 0=... \\
+...= 0$.
 
-These three points are collinear because they are collinear. They are alle points of the horizon, 
-hence, the horizon is a straight line.
+These three points are collinear because their determinant equals zero.
+They are all points of the horizon.
+Hence, the horizon is a straight line.
 
 \newpage
 \section{C++ and OpenCV}
@@ -144,26 +154,27 @@ hence, the horizon is a straight line.
 
 \subsection{}
 
-The two points $x = (2, 3)^T$ and $y = (-4, 5)^T$ are given. \newline
-a) Determine the connecting line $l$ between the two points. \newline
+The two points $x = (2, 3)^T$ and $y = (-4, 5)^T$ are given.
+
+a) Determine the connecting line $l$ between the two points.
 
       $l=x \times y=(-2,-6, 22)^T$
 
 b) Move $x$ and $y$ in the direction $t = (6, -7)^T$,
 rotate afterwards using the angle $\phi = 15°$ and finally
-scale with factor $\lambda = 8$. \newline
+scale with factor $\lambda = 8$.
 
-\[T= 
+\[T =
 \left( \begin{array}{cc}
-I & t  \\
+I & t \\
 0^T & 1   \end{array} \right)
 =
 \left( \begin{array}{ccc}
 1 & 0 &  6 \\
 0 & 1 & -7 \\
-0 & 0 &  1  \end{array} \right)\] 
+0 & 0 &  1  \end{array} \right)\]
 
-\[R= 
+\[R =
 \left( \begin{array}{cc}
 R & 0  \\
 0^T & 1   \end{array} \right)
@@ -171,9 +182,9 @@ R & 0  \\
 \left( \begin{array}{ccc}
   0.96592581 & -0.25881904 & 0 \\
   0.25881904 &  0.96592581 & 0 \\
-  0          &  0          & 1  \end{array} \right)\] 
+  0          &  0          & 1  \end{array} \right)\]
 
-\[S= 
+\[S =
 \left( \begin{array}{cc}
 \lambda I & 0  \\
 0^T & 1   \end{array} \right)
@@ -181,14 +192,14 @@ R & 0  \\
 \left( \begin{array}{ccc}
 8 & 0 & 0 \\
 0 & 8 & 0 \\
-0 & 0 & 1 \end{array} \right)\] 
+0 & 0 & 1 \end{array} \right)\]
 
-$x'=x_{new}=S(R(Tx))=(21.454813; 16.18222; 1)^T$ \newline
-$y'=y_{new}=S(R(Ty))=(-24.909626; 31.637032; 1)^T$ \newline
+$x'=x_{new} = S(R(Tx)) = (21.454813; 16.18222; 1)^T$ \\
+$y'=y_{new} = S(R(Ty)) = (-24.909626; 31.637032; 1)^T$
 
-c) Accomplish the same operations with the line $l$. \newline
+c) Accomplish the same operations with the line $l$.
 
-      $l'=l_{new}=S(R(Tl))=(-0.25881904; -0.77645713; 18.117714)^T$
+      $l' = l_{new} = S(R(Tl)) = (-0.25881904; -0.77645713; 18.117714)^T$
 
 
 
@@ -196,10 +207,13 @@ c) Accomplish the same operations with the line $l$. \newline
 \subsection{}
 
 Examine whether the transformed points $x’$ and $y’$ are
-on the transformed line $l’$. \newline
+on the transformed line $l’$.
 
-Considering a tollerance eps of (1e-05) because of the use of variables of the type float, both points $x_{new}$ and $y_{new}$ 
-are on the line $l_{new}$, as can be seen in the following: \newline
-$x_{new}$ is on line, hence $x_{new}^Tl_{new} \approx 0$ and $y_{new}$ is on line, hence $y_{new}^Tl_{new} \approx 0$. \newline
+Considering a tollerance eps of (1e-05),
+because of the use of variables of the type float.
+Both points $x_{new}$ and $y_{new}$
+are on the line $l_{new}$, as can be seen in the following:
+
+$x_{new}$ is on line, hence $x_{new}^Tl_{new} \approx 0$ and $y_{new}$ is on line, hence $y_{new}^Tl_{new} \approx 0$.
 
 \end{document}
