@@ -1,0 +1,57 @@
+\documentclass[a4paper,headings=small]{scrartcl}
+\KOMAoptions{DIV=12}
+
+\usepackage[utf8x]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{listings}
+
+% define style of numbering
+\numberwithin{equation}{section} % use separate numbering per section
+\numberwithin{figure}{section}   % use separate numbering per section
+
+% instead of using indents to denote a new paragraph, we add space before it
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{10pt plus 1pt minus 1pt}
+
+\title{Photogrammetric Computer Vision - WS12/13 \\ Excercise 2 \\ \emph{Stich images together}}
+\author{Team A: Marcus Grum, Robin Vobruba, Markus Pannwitz, Jens Jawer}
+\date{\today}
+
+\pdfinfo{%
+  /Title    (Photogrammetric Computer Vision - WS12/13 - Excercise 2 - Stich images together)
+  /Author   (Team A: Marcus Grum, Robin Vobruba, Markus Pannwitz, Jens Jawer)
+  /Creator  ()
+  /Producer ()
+  /Subject  ()
+  /Keywords ()
+}
+
+% Simple picture reference
+%   Usage: \image{#1}{#2}{#3}
+%     #1: file-name of the image
+%     #2: percentual width (decimal)
+%     #3: caption/description
+%
+%   Example:
+%     \image{myPicture}{0.8}{My huge house}
+%     See fig. \ref{fig:myPicture}.
+\newcommand{\image}[3]{
+	\begin{figure}[htbp]
+		\centering
+		\includegraphics[width=#2\textwidth]{#1}
+		\caption{#3}
+		\label{fig:#1}
+	\end{figure}
+}
+
+
+\begin{document}
+
+\maketitle
+
+
+
+\end{document}
+
