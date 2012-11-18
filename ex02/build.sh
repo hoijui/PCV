@@ -7,10 +7,7 @@ mkdir -p "${TARGET_DIR}"
 
 cd "${TARGET_DIR}"
 
-if [ ! -f pcv2 ]; then
-	if [ ! -f CMakeCache.txt ]; then
-		cmake ..
-	fi
-	make
+if [ ! -f CMakeCache.txt ]; then
+	cmake ..
 fi
-
+make

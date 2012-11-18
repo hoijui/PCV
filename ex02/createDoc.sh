@@ -10,6 +10,7 @@ cd "${SCRIPT_DIR}"
 
 cd "${DOC_DIR}"
 pdflatex \
+		-interaction=nonstopmode \
 		-output-format=pdf \
 		-output-directory="${TARGET_DIR}" \
 		doc.tex
