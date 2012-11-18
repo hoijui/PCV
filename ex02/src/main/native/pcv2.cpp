@@ -41,8 +41,8 @@ int main(int argc, char** argv) {
 
     // check if image paths were defined
 	if (argc != 4) {
-	cerr << "Usage: pcv2 <path to base image> <path to 2nd image> <path to 3rd image>" << endl;
-	return -1;
+		cerr << "Usage: pcv2 <path to base image> <path to 2nd image> <path to 3rd image>" << endl;
+		return -1;
     }
 
     // titles of some windows
@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
     // fuse image data and window title
     struct winInfo base;
     base.img = baseImage.clone();
-	base.name = winName1;
+    base.name = winName1;
     struct winInfo attach;
     attach.img = attachImage.clone();
     attach.name = winName2;
@@ -123,7 +123,7 @@ int main(int argc, char** argv) {
 
     imwrite("panorama.png", panorama);
 
-	return 0;
+    return 0;
 }
 
 /**
@@ -145,9 +145,9 @@ Mat homography2D(Mat& base, Mat& attach) {
     // create design matrix, for projection attach -> base
     Mat design = getDesignMatrix_homography2D(cBase, cAttach);
 
-    // svd and reshaping
+    // SVD and reshaping
     Mat H = solve_dlt(design);
-    
+
     // creating final homography
     decondition(tBase, tAttach, H);
 
@@ -160,7 +160,7 @@ Mat homography2D(Mat& base, Mat& attach) {
  * @param H  the estimated homography
  */
 Mat solve_dlt(Mat& A) {
-    
+
     Mat d, u, vt;
     SVD::compute(A, d, u, vt, 0); // gibts noch einen kürzeren befehl?!?
 
@@ -373,14 +373,14 @@ int getPoints(struct winInfo& base, struct winInfo& attach, Mat& p_base, Mat& p_
     int n=0; // number of point pairs
     // read points from global variable, transform them into homogeneous coordinates
 	for (vector<Point2f>::iterator p = pointList.begin(); p != pointList.end(); p++) {
-	p_attach.at<float>(0, n) = (*p).x;
-	p_attach.at<float>(1, n) = (*p).y;
-	p_attach.at<float>(2, n) = 1;
-	p++;
-	p_base.at<float>(0, n) = (*p).x;
-	p_base.at<float>(1, n) = (*p).y;
-	p_base.at<float>(2, n) = 1;
-	n++;
+		p_attach.at<float>(0, n) = (*p).x;
+		p_attach.at<float>(1, n) = (*p).y;
+		p_attach.at<float>(2, n) = 1;
+		p++;
+		p_base.at<float>(0, n) = (*p).x;
+		p_base.at<float>(1, n) = (*p).y;
+		p_base.at<float>(2, n) = 1;
+		n++;
     }
 
     return n;
@@ -399,18 +399,18 @@ void getPoints(int event, int x, int y, int flags, void* param) {
   struct winInfo* win = (struct winInfo*)param;
 
 	switch (event) {
-    // if left mouse button was pressed
+		// if left mouse button was pressed
 		case CV_EVENT_LBUTTONDOWN: {
-	// create point representing mouse position
-	Point2f p = Point2f(x,y);
-	// draw green point
-	circle(win->img, p, 2, Scalar(0, 255, 0), 2);
-	// draw green circle
-	circle(win->img, p, 15, Scalar(0, 255, 0), 2);
-	// update image
-	imshow(win->name.c_str(), win->img);
-	// add point to point list
-	pointList.push_back(p);
+			// create point representing mouse position
+			Point2f p = Point2f(x,y);
+			// draw green point
+			circle(win->img, p, 2, Scalar(0, 255, 0), 2);
+			// draw green circle
+			circle(win->img, p, 15, Scalar(0, 255, 0), 2);
+			// update image
+			imshow(win->name.c_str(), win->img);
+			// add point to point list
+			pointList.push_back(p);
 		} break;
   }
 }
