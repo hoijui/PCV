@@ -51,7 +51,186 @@
 
 \maketitle
 
+In this exercise a fundamental projective transformation is realized. 
+The task consisted of rectifying images geometrically and stitching
+them together, so that a panorama mosaic was generated.
 
 
+\section{Image Acquisition:}
+
+For the beginning, we were asked to take pictures with a digital camera,
+which overlap horizontal at least 30 percent. 
+We decided to use three images without disparities, 
+as they can be seen in fig.\ref{fig:../../../target/InputPics/1},
+fig.\ref{fig:../../../target/InputPics/2}, fig.\ref{fig:../../../target/InputPics/3}.
+
+\image{../../../target/InputPics/1}{0.3}{%
+		Input picture 1.}
+\image{../../../target/InputPics/2}{0.3}{%
+		Input picture 2.}
+\image{../../../target/InputPics/3}{0.3}{%
+		Input picture 3.}
+
+Those pictures were taken by turning around the projection center of the camera
+and focussing 5 ordinary breakfast items as they can be found in every house hold.
+From the left to the right: a salt shaker, an egg, another egg, a bread and another bread.
+The camera was positioned in the middle of a round table, such that it had a stable position
+and could not disturb the algorithm. The pictures were clear and well exposed. 
+
+\section{Correspondence Analysis:}
+
+Those images were transfered into the computer. At least four corresponding image points 
+x ↔ x′ between two neighbouring images were manually measured through clicking manually on the surface. 
+Those points are described in the following.
+
+The point pairs that are used for the adaption process of picture one and picture two
+can be seen in fig. \ref{fig:../../../target/general_selection_1}.
+
+\image{../../../target/general_selection_1}{0.6}{%
+		Point selections of picture 1 and picture 2 (\emph{general positions}).}
+
+Here, one can see that 6 independent point pairs are used.
+For the second adaption process of picture three and picture two,
+those point pairs are used that can be found in fig. \ref{fig:../../../target/general_selection_2}.
+
+\image{../../../target/general_selection_2}{0.6}{%
+		Point selections of picture 3 and picture 2 (\emph{general positions}).}
+
+Here, one can see that 7 independent point pairs are used.
+Although just 4 point pairs were required, we decided to choose more
+because the most obvious points enter the food and its podest are nearly collinear
+as the following fig. \ref{fig:../../../target/nonGeneral_selection_1} shall show.
+
+\image{../../../target/nonGeneral_selection_1}{0.6}{%
+		Point selections of picture 1 and picture 2 (\emph{with non general points}).}
+
+The positions of the point pairs were not choosen randomly: They were chosen 
+at remarkable obvious points, such as the edge between the food and its podest, 
+between the podest and the table or the very top of the food.
+
+
+\section{Homography Computation:}
+
+In the following, a C++-function is implemented to estimate a 2D homography using singular value
+decomposition. It computes the two necessary homography matrices.
+
+  \subsection{Conditioning}
+
+In the beginning, the two coordinate transformation matrices are computed for conditioning.
+One for each base picture and one for each picture to be attached.
+These matrices include two transformations: 
+Firstly, the translation of the centroid of all points to the origin.
+In the code, the following function realizes the transformations:
+\begin{lstlisting}
+Mat tBase = getCondition2D(base);
+\end{lstlisting}
+Secondly, this function realizes the the scaling of the mean distance to origin to one.
+
+  \subsection{Create design matrix}
+
+The design matrix is built as follows: \\
+\begin{align}
+A_{i}=
+\left( \begin{array}{ccc}
+-\tilde{w}'\tilde{x_i^T} & 0 & \tilde{u_i}'\tilde{x_i^T} \\
+0 & -\tilde{w}'\tilde{x_i^T} & \tilde{v_i}'\tilde{x_i^T}
+\end{array} \right) 
+\end{align}
+
+In the code, the following function realizes the design matrix:
+\begin{lstlisting}
+Mat getDesignMatrix_homography2D(Mat& base, Mat& attach);
+\end{lstlisting}
+
+  \subsection{Solve equation system with SVD and Reshape}
+
+The linear homogeneous equation system is solved with the Single Value Decomposition.
+\begin{align}
+Ah=0, h=(a,b,c,d,e,f,g,h,j)^T 
+\end{align}
+
+In the code, the following function realizes the solution:
+\begin{lstlisting}
+Mat H = solve_dlt(design);
+\end{lstlisting}
+
+This function uses the function compute(A, d, u, vt, 0); that computes U, D and V matrices.
+D and V are in decending order, such that the last row of V stands for the parameters of $H$. 
+
+Afterwards, the reshape is realized with this function as well.
+\begin{align}
+\tilde{H}=
+\left( \begin{array}{ccc}
+a & b & c \\
+d & e & f \\
+g & h & j
+\end{array} \right)
+\end{align}
+
+  \subsection{Deconditioning}
+In order to get back to the original coordinates, a final transformation matrix $H$ 
+that is Euclidean normalized is calculated as follows:
+\begin{align}
+H=T'^{-1}\tilde{H}T
+\end{align}
+
+In the code, the following function realizes the solution:
+\begin{lstlisting}
+decondition(tBase, tAttach, H);
+\end{lstlisting}
+
+After this number of sub steps, the two necessary homography matrices are computed and can be used
+afterwards.
+
+\section{Projective Rectification:}
+
+The estimated homographies are used to adapt the first and the third image to the second one.
+Because of the fact, that our pictures are projective distorted, they can be rectified by
+applying our algorithm.
+
+The result of the first process can be seen in fig. \ref{fig:../../../target/general_result_1}.
+
+\image{../../../target/general_result_1}{0.9}{%
+		Resulting picture 1 (\emph{general positions}).}
+
+
+The final result of the second adaption processes can be seen in the section of Visualization.
+%\begin{lstlisting}
+%cvEqualizeHist ( img1, out );
+%\end{lstlisting}
+%\begin{align}
+%f
+%\end{align}
+
+\section{Visualization:}
+
+In our implementation, the produced panorama image is shown on the screen and saved to disk.
+Based on the three input pictures, it can be seen in fig. \ref{fig:../../../target/general_result_2}.
+
+\image{../../../target/general_result_2}{0.9}{%
+		Resulting picture 2 (\emph{general positions}).}
+
+\section{Optional:}
+
+%Change code in order to process arbitrary number of images.
+How could one find corresponding point pairs automatically?
+
+A first approach could be to determine point pairs dependend on the intersection of edges.
+On overlapping sections of certain images, there would a structure of edges be detectable,
+that could be used for the automatic point pair search. 
+For this, it has to be considered, that a sufficient amount of points is available to
+recognize similar edge structures and to ensure that structures of non overlapping parts
+don't fit at all.
+
+Independently on the camera, one could project an infrared raster in the scene.
+Hence, the same points could be detected automatically with help of this grid system.
+
+\section{Printed Code:}
+
+%\lstset{language=<C++>}
+%\begin{lstlisting}
+%test
+%\end{lstlisting}
+\lstinputlisting{../native/pcv2.cpp}
 \end{document}
 
