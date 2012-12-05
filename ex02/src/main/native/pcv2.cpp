@@ -164,6 +164,10 @@ Mat solve_dlt(Mat& A) {
     Mat d, u, vt;
     SVD::compute(A, d, u, vt, 0); // gibts noch einen kürzeren befehl?!?
 
+	// die werte in d (und dementsprechend in vt)
+	// sind der groesse nach sortiert.
+	// der kleinste (d wert) ist der letzte,
+	// desshalb benutzen wir diesen vt vektor.
     Mat h = vt.row(8);
 
     // reshape h -> H
