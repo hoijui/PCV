@@ -1,4 +1,5 @@
 target/
+CMakeLists.txt.user
 *.pdf
 *.zip
 *.png
