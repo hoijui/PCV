@@ -84,6 +84,58 @@ P	The 3x4 projection matrix
 */
 void interprete(Mat& P) {
 
+	// see pcv8_WS1213_cameramodel.pdf page 11+
+	// see pcv9_WS1213_projectionmatrix.pdf page 9
+
+	Mat M = P.colRange(0, 2);
+	Mat upper(3, 3, P.type());
+	Mat rest(3, 3, P.type());
+	RQDecomp3x3(M, upper, rest);
+	Mat rotationMatrix = rest;
+	Mat calibrationMatrix = upper;
+
+	Mat P234 = P.colRange(1, 3);
+	Mat P134(3, 3, P.type());
+	P134.row(0) = P.row(0);
+	P134.row(1) = P.row(2);
+	P134.row(2) = P.row(3);
+	Mat P124(3, 3, P.type());
+	P134.row(0) = P.row(0);
+	P134.row(1) = P.row(1);
+	P134.row(2) = P.row(3);
+	Mat P123 = P.colRange(0, 2);
+
+	Mat projectionCenter(3, 1, CV_32FC1);
+	projectionCenter.at<float>(0, 0) = determinant(P234);
+	projectionCenter.at<float>(1, 0) = determinant(P134);
+	projectionCenter.at<float>(2, 0) = determinant(P124);
+	const float W = determinant(P123);
+	projectionCenter = projectionCenter / W;
+
+	Mat principlePoint(2, 1, CV_32FC1);
+	principlePoint.at<float>(0, 0) = calibrationMatrix.at<float>(0, 3);
+	principlePoint.at<float>(1, 0) = calibrationMatrix.at<float>(1, 3);
+
+	const float principleDistance = calibrationMatrix.at<float>(0, 0);
+
+	const float skew = calibrationMatrix.at<float>(0, 1);
+
+	float omega = 0.0f; // TODO extract from rotation matrix
+	float phi = 0.0f; // TODO extract from rotation matrix
+	float kappa = 0.0f; // TODO extract from rotation matrix
+
+	// Interior orientation
+	cout << "C (projection center): " << projectionCenter << endl;
+	cout << "R (rotation matrix): " << rotationMatrix << endl;
+	cout << "Rotation angles (omega, phi, kappa): " << omega << ", " << phi << ", " << kappa << endl;
+
+	// Exterior orientation
+	cout << "alpha_x (principle distance) [px]: " << principleDistance << endl;
+	cout << "s (skew): " << skew << endl;
+	cout << "principle point (x_0, y_0) [px]: " << principlePoint << endl;
+	const float aspectRatio = 0.0f;
+	cout << "aspect ratio (gamme = alpha_y / alpha_x) [<no unit>]: " << aspectRatio << endl;
+
 	// TODO
 }
 
