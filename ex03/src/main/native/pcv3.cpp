@@ -175,7 +175,59 @@ return		the projection matrix to be computed
 */
 Mat calibrate(Mat& points2D, Mat& points3D) {
 
-	// TODO
+	// see pcv9_WS1213_projectionmatrix.pdf page 7
+
+	const int n = points2D.cols;
+
+	const Mat conditioner2D = createConditioningMatrix(points2D); // T'
+	const Mat conditioner3D = createConditioningMatrix(points3D); // T
+
+	// condition
+	const Mat points2DConditioned = conditioner2D * points2D;
+	const Mat points3DConditioned = conditioner3D * points3D;
+
+	Mat designMatrix = Mat::zeros(2*n, 12, points2D.type());
+	//vector<Mat> designMatrices;
+	for (int c = 0; c < n; ++c) {
+		const float u = points2DConditioned.at<float>(0, c);
+		const float v = points2DConditioned.at<float>(1, c);
+		const float w = points2DConditioned.at<float>(2, c);
+		const Mat& X = points3DConditioned.col(c);
+		//Mat designMatrix = Mat::zeros(2, 12, points2D.type());
+		// -w * X^T
+		designMatrix.at<float>(2*c + 0, 0)  = -w * X.at<float>(0);
+		designMatrix.at<float>(2*c + 0, 1)  = -w * X.at<float>(1);
+		designMatrix.at<float>(2*c + 0, 2)  = -w * X.at<float>(2);
+		designMatrix.at<float>(2*c + 0, 3)  = -w * X.at<float>(3);
+		// -w * X^T
+		designMatrix.at<float>(2*c + 1, 4)  = -w * X.at<float>(0);
+		designMatrix.at<float>(2*c + 1, 5)  = -w * X.at<float>(1);
+		designMatrix.at<float>(2*c + 1, 6)  = -w * X.at<float>(2);
+		designMatrix.at<float>(2*c + 1, 7)  = -w * X.at<float>(3);
+		// u * X^T
+		designMatrix.at<float>(2*c + 0, 8)  = u * X.at<float>(0);
+		designMatrix.at<float>(2*c + 0, 9)  = u * X.at<float>(1);
+		designMatrix.at<float>(2*c + 0, 10) = u * X.at<float>(2);
+		designMatrix.at<float>(2*c + 0, 11) = u * X.at<float>(3);
+		// v * X^T
+		designMatrix.at<float>(2*c + 1, 8)  = v * X.at<float>(0);
+		designMatrix.at<float>(2*c + 1, 9)  = v * X.at<float>(1);
+		designMatrix.at<float>(2*c + 1, 10) = v * X.at<float>(2);
+		designMatrix.at<float>(2*c + 1, 11) = v * X.at<float>(3);
+
+		//designMatrices.push_back(designMatrix);
+	}
+
+	// DEPRECATED TODO make one big design matrix with columns merged?
+
+	Mat p;
+	SVD::solveZ(designMatrix, p); // designMatrix * p = 0
+
+	Mat Ptilde = p.reshape(3, 4);
+
+	Mat P = conditioner2D * Ptilde * conditioner3D;
+
+	return P;
 }
 
 // solve homogeneous equation system by usage of SVD
