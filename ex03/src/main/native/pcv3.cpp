@@ -139,6 +139,34 @@ void interprete(Mat& P) {
 	// TODO
 }
 
+static Mat createConditioningMatrix(const Mat& points) {
+
+	const int d = points.rows;
+	const int n = points.cols;
+
+	// center
+	Mat center = Mat::zeros(d, 1, points.type());
+	for (int c = 0; c < n; ++c) {
+		center += points.col(c);
+	}
+	center /= n;
+	Mat centeringTranslation = Mat::zeros(d, d, points.type());
+	centeringTranslation.col(d - 1) = -center;
+
+	// set std. deviation to 1
+	Scalar averageSqDist = 0.0;
+	for (int c = 0; c < n; ++c) {
+		const Scalar distSq = sum(points.col(c) - center);
+		averageSqDist += distSq;
+	}
+	averageSqDist /= (Scalar)n;
+	Scalar invAverageSqDist = (Scalar)1 / averageSqDist;
+	Mat stdDeviationNormalization = Mat::eye(d, d, points.type());
+	stdDeviationNormalization = stdDeviationNormalization / averageSqDist;
+
+	return stdDeviationNormalization * centeringTranslation;
+}
+
 // estimate projection matrix
 /*
 points2D	set of 2D points within the image
