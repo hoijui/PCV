@@ -1,0 +1,392 @@
+\documentclass[a4paper,headings=small]{scrartcl}
+\KOMAoptions{DIV=12}
+
+\usepackage[utf8x]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{listings}
+\usepackage{subfigure}
+
+% define style of numbering
+\numberwithin{equation}{section} % use separate numbering per section
+\numberwithin{figure}{section}   % use separate numbering per section
+
+% instead of using indents to denote a new paragraph, we add space before it
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{10pt plus 1pt minus 1pt}
+
+\title{Photogrammetric Computer Vision - WS12/13 \\ Excercise 3 \\ \emph{Camera calibration}}
+\author{Team A: Marcus Grum, Robin Vobruba, Markus Pannwitz, Jens Jawer}
+\date{\today}
+
+\pdfinfo{%
+  /Title    (Photogrammetric Computer Vision - WS12/13 - Excercise 3 - Camera Calibration)
+  /Author   (Team A: Marcus Grum, Robin Vobruba, Markus Pannwitz, Jens Jawer)
+  /Creator  ()
+  /Producer ()
+  /Subject  ()
+  /Keywords ()
+}
+
+% Simple picture reference
+%   Usage: \image{#1}{#2}{#3}
+%     #1: file-name of the image
+%     #2: percentual width (decimal)
+%     #3: caption/description
+%
+%   Example:
+%     \image{myPicture}{0.8}{My huge house}
+%     See fig. \ref{fig:myPicture}.
+\newcommand{\image}[3]{
+	\begin{figure}[htbp]
+		\centering
+		\includegraphics[width=#2\textwidth]{#1}
+		\caption{#3}
+		\label{fig:#1}
+	\end{figure}
+}
+\newcommand{\generatedImgRootImg}{../resources/img}
+\newcommand{\generatedImgRootTarget}{../../../target}
+
+
+\begin{document}
+
+\maketitle
+
+In this exercise a camera calibration is realized using a direct linear transformation. 
+The task consisted of generating the projection matrix from selfmade images 
+and finding with this the interior and exterior orientation, 
+such that geometric measurements can be made with the used camera and lens set.
+
+\section{Image Acquisition:}
+
+For the beginning, we were asked to take pictures with a digital camera,
+which show an appropriate calibration object. 
+We decided to use two different kinds of camera lens.
+Firstly, a zoom lens, which has been locked at 100mm, such that it can't change
+during several fotos.
+Secondly, a 50mm fix lens.
+Those generated input pictures can be seen in fig. ~\ref{fig:Input pictures}.
+
+\begin{figure}
+  \subfigure[Locked Zoom lens]{\frame{\includegraphics[width=0.49\textwidth]{\generatedImgRootImg/LockedZoom1.JPG}}} \hfill
+  \subfigure[50mm fix lens]{\frame{\includegraphics[width=0.49\textwidth]{\generatedImgRootImg/Festbrennweite1.JPG}}}
+  \caption{Input pictures using two different camera lens.}
+  \label{fig:Input pictures}
+\end{figure}
+
+In the fokus, one can see a tabel, which we intended to be our 
+appropriate calibration object. It should become visible, 
+that the table's feet in the left picture are not stright at all,
+which is a lense specific disturbance.
+The table's feet in the right picture are only minimal disturbed.
+The calibration object is described in the following.
+
+a) Describe the acquired calibration object in brief.
+
+As calibration object, we have modified a proper table from IKEA called \emph{LACK Couchtisch}.
+It has a squared tabletop of the size of about 50cm and it has four feet, originally.
+For the use as calibration object, we dismantled the table foot
+that was in the foreground, such that one can see the room below the table easily.
+The table was turned around, such that one can see the room enter the three table feet 
+and the tabletop. Its total height is about 45cm.
+
+The detailed dimensions can be found in the pictures itself:
+For an easy and correct point estimation, the real points have been measured with a tape measure
+and they have been put on green papers next to the positions.
+Each coordinate set is connected by the real point by an arrow,
+such that one can eassily see the measured coordinates in the picture itself.
+
+The two pictures have been taken by a camera that is specified in the following.
+
+b) Specify important technical information of the used camera
+(i.e. type, resolution, etc.)
+
+\begin{enumerate}
+       \item model               = Canon EOS 550D.
+       \item kind                = Digital single-lens reflex.
+       \item sensor              = CMOS APS-C 22.3 x 14.9mm (1.6x conversion factor)
+       \item resolution          = 5,184 x 3,456 (17.9 recorded [[megapixels]])
+       \item lens 1              = Canon EF lens mount
+       \item lens 2              = Canon EF lens mount
+       \item ISO range           = ISO 100 to 6400 (expandable to 12800)
+       \item flash               = Canon EOS flash system E-TTL II automatic built-in pop-up
+       \item Metering modes      = Evaluative, Spot (4 percent at center), Partial (9 percent at center), Center-weighted average
+       \item Focus areas         = 6 AF points, f/5.6 cross-type center (extra sensitivity at f/2.8)
+       \item Focus modes 	 = AI Focus, One-Shot, AI Servo, Live View
+       \item Continuous shooting = 3.7 frame/s for 34 JPEG or 6 RAW frames
+\end{enumerate}
+
+\section{Control point measurements:}
+
+Then, we were asked to determine the three-dimensional object coordinates of at least 6 known
+control points and their two-dimensional image coordinates. 
+Those point correspondences can be found in fig. ~\ref{fig:Point Correspondences}
+considering each input image.
+
+\begin{figure}
+  \subfigure[Locked Zoom lens]{
+    \begin{tabular}{ l || c | c || c| c| c}
+	&\multicolumn{2}{|c||}{Image points [pix]}&\multicolumn{3}{|c}{Image points [cm]} \\
+      No & x & y & X & Y & Z\\
+      \hline
+      1 & 5 & 6 &  0   & -49.6 & 40\\
+      2 & 8 & 9 &  0   &   0   & 40\\
+      3 & 8 & 9 & 49.6 &   0   & 40\\
+      4 & 8 & 9 &  0   & -49.6 &  0\\
+      5 & 8 & 9 &  0   &   0   &  0\\
+      6 & 8 & 9 & 49.6 &   0   &  0\\
+    \end{tabular}
+  } \hfill
+  \subfigure[50mm fix lens]{
+    \begin{tabular}{ l || c | c || c| c| c}
+	&\multicolumn{2}{|c||}{Image points [pix]}&\multicolumn{3}{|c}{Image points [cm]} \\
+      No & x & y & X & Y & Z\\
+      \hline
+      1 & 5 & 6 &  0   & -49.6 & 40\\
+      2 & 8 & 9 &  0   &   0   & 40\\
+      3 & 8 & 9 & 49.6 &   0   & 40\\
+      4 & 8 & 9 &  0   & -49.6 &  0\\
+      5 & 8 & 9 &  0   &   0   &  0\\
+      6 & 8 & 9 & 49.6 &   0   &  0\\
+    \end{tabular}
+  }
+  \subfigure[Locked Zoom lens]{\frame{\includegraphics[width=0.49\textwidth]{\generatedImgRootImg/LockedZoom1Visualisation.JPG}}} \hfill
+  \subfigure[50mm fix lens]{\frame{\includegraphics[width=0.49\textwidth]{\generatedImgRootImg/Festbrennweite1Visualisation.JPG}}}
+  \caption{Point Correspondences.}
+  \label{fig:Point Correspondences}
+\end{figure}
+
+For a better understanding, those point correspondences have been 
+visualized in fig. ~\ref{fig:Point Correspondences}
+considering each input image as well.
+
+a) How did you define the axes of the object coordinate system?
+
+The axes of the object coordinate system have been defined in a way,
+that the point of origin was situated in that intersection of the tabletop and the table's feet
+that was in the very back. This point was the fifth point fig. in ~\ref{fig:Point Correspondences}.
+
+Hence, the x axis connects the points five and six,
+the y axis connects the points five and four and
+the z axis connects the points five and two.
+
+Because of the rectangle of the tabletop and its feet,
+this definition was the easies one and offered the most correct measurement possibilities.
+
+b) How precise where the object coordinates measured?
+
+The object coordinates were measured as precise as it was possible
+without using any special gadgets. We used a measure tape,
+measured only stright distances and ensured to use only rectangular site relations.
+
+Indeed, for a very precise measurement, we have had to measure the exact angles 
+of the axis definition additionally, we have had to proof the strightness
+of the tabletop and its single feet and we have had to take care about small
+production lacks and corners in the table. 
+Because of their disturbance potential of only a few milimeters,
+we decided to continue our work based on the given materials.
+
+\section{Computation of the Projection Matrix:}
+
+Implement a function in C++ for spatial resection using the direct linear
+estimation method of the projection matrix with help of the singular value
+decomposition.
+
+  \subsection{Conditioning}
+
+  In the beginning, the interesting point correspondence matrices are computed for conditioning.
+  One for each specific lens.
+  These matrices include two transformations: 
+  Firstly, the translation of the centroid of all points to the origin.
+  In the code, the following function realizes the transformations:
+  \begin{lstlisting}
+  Mat tBase = getCondition2D(base);
+  \end{lstlisting}
+  Secondly, this function realizes the the scaling of the mean distance to origin to one.
+
+  \subsection{Create design matrix}
+
+  The design matrix is built as follows: \\
+  \begin{align}
+  A_{i}=
+  \left( \begin{array}{ccc}
+  -\tilde{w}'\tilde{X_i^T} & 0 & \tilde{u_i}'\tilde{X_i^T} \\
+  0 & -\tilde{w}'\tilde{X_i^T} & \tilde{v_i}'\tilde{X_i^T}
+  \end{array} \right) 
+  \end{align}
+
+  In the code, the following function realizes the design matrix:
+  \begin{lstlisting}
+  Mat getDesignMatrix_homography3D(Mat& base, Mat& attach);
+  \end{lstlisting}
+
+  \subsection{Solve equation system with SVD and Reshape}
+
+  The linear homogeneous equation system is solved with the Single Value Decomposition.
+  \begin{align}
+  Ap=0, p=(a,b,c,d,e,f,g,h,j,k,l)^T 
+  \end{align}
+
+  In the code, the following function realizes the solution:
+  \begin{lstlisting}
+  Mat H = solve_dlt(design);
+  \end{lstlisting}
+
+  This function uses the function compute(A, d, u, vt, 0); that computes U, D and V matrices.
+  D and V are in decending order, such that the last row of V stands for the parameters of $P$. 
+
+  Afterwards, the reshape is realized with this function as well.
+  \begin{align}
+  \tilde{P}=
+  \left( \begin{array}{cccc}
+  a & b & c & d \\
+  e & f & g & h \\ 
+  i & j & k & l
+  \end{array} \right)
+  \end{align}
+
+  \subsection{Deconditioning}
+In order to get back to the original coordinates, a final transformation matrix $H$ 
+that is Euclidean normalized is calculated as follows:
+\begin{align}
+P=T'^{-1}\tilde{P}T
+\end{align}
+
+In the code, the following function realizes the solution:
+\begin{lstlisting}
+decondition(tBase, tAttach, H);
+\end{lstlisting}
+
+After all steps, the final projection matrix P looks like in the folloging:
+
+\begin{align}
+P=
+\left( \begin{array}{cccc}
+p_{11} & p_{12} & p_{13} & p_{14} \\
+p_{21} & p_{22} & p_{23} & p_{24} \\
+p_{31} & p_{32} & p_{33} & p_{34}
+\end{array} \right) 
+=
+\left( \begin{array}{cccc}
+a & b & c & d \\
+e & f & g & h \\
+i & j & k & j
+\end{array} \right) 
+\end{align}
+
+In the following section, we refer to P's elements using the following nomenclature:\\
+$p_1=[p_{11} \  p_{21} \  p_{31}]^T$, $p_2=[p_{12} \  p_{22} \  p_{32}]^T$, $p_3=[p_{13} \  p_{23} \  p_{33}]^T$ and $p_4=[p_{14} \  p_{24} \  p_{34}]^T$.\\
+$m^{3}=[p_{31} \  p_{32} \  p_{33}]$ and $M=[p_{1} \  p_{2} \  p_{3}]$.
+
+\section{Interpretation of the Projection Matrix:}
+
+Before the projection matrix can be interpreted, it has to be factorized using a RQ-decomposition.
+Hence, in the following, firstly, a RQ-decomposition will be applied on the found projection matrix.
+Having then the the calibration matrix R and the rotation matrix Q,
+all eleven parameters of the interior and exterior orientation are derived.
+Although the projection center already could be derived, it is done together with the other derivations.
+
+RQ-decomposition ...
+
+The upper triangular matrix R can be used for the derivation of the interior orientation.
+Hence, it can also be called as the calibration matrix K. that can be seen in the following:
+\begin{align}
+R=K=
+\left( \begin{array}{ccc}
+a_x & s   & x_0 \\
+0   & a_y & y_0 \\
+0   & 0   & 1
+\end{array} \right) 
+\end{align}
+Hence, the first five parameters can be derived as follows:
+
+\begin{tabular}{ l l || c || c}
+      No & parameter & Locked Zoom & 50mm \\
+      \hline
+      1.) & principle distance $a_x$ & =... &  =... \\
+      2.) & skew $s$ & =... &  =...   \\
+      3.)  4.) & principle point ($x_0, y_0$) & =... & =...\\
+      5.) & aspect ratio $\gamma=a_y/a_x$ & =... &  =... 
+\end{tabular}
+
+The orthogonal matrix Q can be used for the derivation of the exterior orientation.
+Hence, it can also be called as the rotation matrix R that can be seen in the following:
+\begin{align}
+Q=R=Q_z^TQ_y^TQ_x^T 
+\end{align}
+So the rotation matrix R includes the single rotations along the z axis using $Q_z^T$,
+along the y axis using $Q_y^T$ and along the x axis using $Q_x^T$.
+Hence, the next three parameters can be derived as follows:
+
+\begin{tabular}{ l l || c || c}
+      No & parameter & Locked Zoom & 50mm \\
+      \hline
+      6.) & $\omega=atan(-r_{32}/r_{33})$ & =... &  =... \\
+      7.) & $\phi=asin(r_{31})$ & =... &  =...  \\
+      8.) & $\kappa=atan(-r_{21}/r_{11})$ & =... & =...
+\end{tabular}
+
+The projection matrix P can be used for the derivation of the center $C=(X_0,Y_0,Z_0,W_0)$
+and with this for the completing of the exterior orientation.
+\begin{align}
+c_i=(-1)^i det(\tilde{P}_i), 
+\end{align}
+where $\tilde{P}_i$ is the matrix P without column i for i=1,...,4.
+Hence, the derivation of the last three parameters can be seen in the following:
+
+\begin{tabular}{ l l || c || c}
+      No & parameter & Locked Zoom & 50mm \\
+      \hline
+      9.) & $X_0=det[p2,p3,p4]$ & =... &  =... \\
+      10.) & $Y_0=det[p1,p3,p4]$ & =... &  =...  \\
+      11.) & $Z_0=det[p1,p2,p4]$ & =... & =...\\
+      Add.) & $W_0=det[p1,p2,p3]$ & =... & =...
+\end{tabular}
+
+a.) Explain the geometric meaning of the extracted parameters in brief.
+
+\begin{enumerate}
+\item[1)] The principle distance $a_x$ is the perpendicular distance of the projection center
+to the image plane.
+\item[2)] The skew $s$ gives the twist of the x axis relativ to the y axis.
+\item[3 + 4)] The position of the principle point ($x_0$, $y_0$) is given by the section of the 
+viewing direction $Z_c$ with the image plane.
+\item[5)] The aspect ratio $\gamma=a_y/a_x$ gives the ratio between the space angles covered
+by one pixel in the x- w.r.t the y-axis.
+\item[6 + 7 + 8)] The spatial rotation angles $\omega$, $\phi$, $\kappa$ are standing for euler rotation of the camera coordinate system in the
+world coordinate system. Hence, they are part of the exterior orientation.
+\item[9)] The component $X_0$ is the first spatial component of the position of the projection center C.\\
+\item[10)] The component $Y_0$ is the second spatial component of the position of the projection center C.\\
+\item[11)] The component $Z_0$ is the third spatial component of the position of the projection center C.\\
+\item[Add.)] The component $W_0$ is the homogeneous part of the position of the projection center C.\\
+\end{enumerate} 
+
+b.) Evaluate the whole calibration process. How precise is the camera
+orientation determined and where does the quality depend on?
+
+All in all, the whole calibration process does not try to model the physics of the real world
+(e.g. the exact light ray changes of a combination of several lenses).
+For all the complex changes, there is used just one simple projection matrix.
+Its calculation, use and interpretation is very easy and simplifies a lot,
+but is for very exact calculations not the ideal choice.\\ 
+
+How precise is the camera orientation determined...\\
+
+In the end, the quality depends on the following points:
+\begin{itemize} 
+\item The exactness of the image point selection by the computer mouse fulfilled by the human. 
+\item Differences of the ideal model of central perspective (e.g. radial symmetric distortion).
+\item Distortions through the camera lenses.
+\end{itemize}
+
+\section{Printed Code:}
+
+%\lstset{language=<C++>}
+%\begin{lstlisting}
+%test
+%\end{lstlisting}
+\lstinputlisting[breaklines=true]{../native/pcv3.cpp}
+\end{document}
+
