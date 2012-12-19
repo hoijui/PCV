@@ -76,6 +76,9 @@ int main(int argc, char** argv) {
 	// calculate projection matrix
 	Mat P = calibrate(points2D, points3D);
 
+	cout << endl << "P:" << endl;
+	cout << P << endl;
+
 	// decompose P to get camera parameter
 	interprete(P);
 
