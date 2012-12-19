@@ -91,49 +91,54 @@ void interprete(Mat& P) {
 	// see pcv8_WS1213_cameramodel.pdf page 11+
 	// see pcv9_WS1213_projectionmatrix.pdf page 9
 
-	Mat M(P, Rect(0, 0, 3, 3));
-	Mat Q_x = Mat::eye(3, 3, CV_32FC1);
-	Mat Q_y = Mat::eye(3, 3, CV_32FC1);
-	Mat Q_z = Mat::eye(3, 3, CV_32FC1);
-	
-	float t = sqrt( pow(M.at<float>(2, 1), 2) + pow(M.at<float>(2, 2), 2) );
-	float s = -M.at<float>(2, 1) / t;
-	float c =  M.at<float>(2, 2) / t;
-	Q_x.at<float>(1, 1) = Q_x.at<float>(2, 2) = c;
-	Q_x.at<float>(1, 2) = -s;
-	Q_x.at<float>(2, 1) =  s;
-	
-	Mat M_1 = M * Q_x;
-	M_1.at<float>(2, 1) = 0;
-	
-	t = sqrt( pow(M_1.at<float>(2, 0), 2) + pow(M_1.at<float>(2, 2), 2) );
-	s = M.at<float>(2, 0) / t;
-	c = M.at<float>(2, 2) / t;
-	Q_y.at<float>(0, 0) = Q_x.at<float>(2, 2) = c;
-	Q_y.at<float>(0, 2) =  s;
-	Q_y.at<float>(2, 0) = -s;
+	Mat M = P.colRange(0, 3);
+	Mat upper(3, 3, P.type());
+	Mat rest(3, 3, P.type());
+	RQDecomp3x3(M, upper, rest);
+	Mat rotationMatrix = rest;
+	Mat calibrationMatrix = upper;
 
-	Mat M_2 = M_1 * Q_y;
-	M_2.at<float>(2, 0) = M_2.at<float>(2, 1) = 0;
-	
-	t = sqrt( pow(M_1.at<float>(1, 0), 2) + pow(M_1.at<float>(1, 1), 2) );
-	s = -M.at<float>(1, 0) / t;
-	c =  M.at<float>(1, 1) / t;
-	Q_z.at<float>(0, 0) = Q_x.at<float>(1, 1) = c;
-	Q_z.at<float>(0, 1) = -s;
-	Q_z.at<float>(1, 0) =  s;
+	Mat P234 = P.colRange(1, 4);
+	Mat P134(3, 3, P.type());
+	P134.col(0) = P.col(0);
+	P134.col(1) = P.col(2);
+	P134.col(2) = P.col(3);
+	Mat P124(3, 3, P.type());
+	P134.col(0) = P.col(0);
+	P134.col(1) = P.col(1);
+	P134.col(2) = P.col(3);
+	Mat P123 = P.colRange(0, 3);
 
-	Mat M_3 = M_2 * Q_z;
-	M_2.at<float>(1, 0) = M_2.at<float>(2, 0) = M_2.at<float>(2, 1) = 0;
+	Mat projectionCenter(3, 1, CV_32FC1);
+	projectionCenter.at<float>(0, 0) = determinant(P234);
+	projectionCenter.at<float>(1, 0) = determinant(P134);
+	projectionCenter.at<float>(2, 0) = determinant(P124);
+	const float W = determinant(P123);
+	projectionCenter = projectionCenter / W;
 
-	Mat R = M * Q_x * Q_y * Q_z;
-	Mat Q = Q_z.t() * Q_y.t() * Q_x.t();
+	Mat principlePoint(2, 1, CV_32FC1);
+	principlePoint.at<float>(0, 0) = calibrationMatrix.at<float>(0, 2);
+	principlePoint.at<float>(1, 0) = calibrationMatrix.at<float>(1, 2);
 
-	cout << "Interpretation of the 3x4 projection matrix" << endl;
-	cout << "Matrix R:" << endl;
-	cout << R << endl;
-	cout << endl << "Matrix Q:" << endl;
-	cout << Q << endl;
+	const float principleDistance = calibrationMatrix.at<float>(0, 0);
+
+	const float skew = calibrationMatrix.at<float>(0, 1);
+
+	float omega = atan(- rotationMatrix.at<float>(2, 1) / rotationMatrix.at<float>(2, 2));
+	float phi = asin(rotationMatrix.at<float>(2, 0));
+	float kappa = atan(- rotationMatrix.at<float>(1, 0) / rotationMatrix.at<float>(0, 0));
+
+	// Exterior orientation
+	cout << "C (projection center): " << projectionCenter << endl;
+	cout << "R (rotation matrix): " << rotationMatrix << endl;
+	cout << "Rotation angles (omega, phi, kappa): " << omega << ", " << phi << ", " << kappa << endl;
+
+	// Interior orientation
+	cout << "alpha_x (principle distance) [px]: " << principleDistance << endl;
+	cout << "s (skew): " << skew << endl;
+	cout << "principle point (x_0, y_0) [px]: " << principlePoint << endl;
+	const float aspectRatio = 0.0f;
+	cout << "aspect ratio (gamme = alpha_y / alpha_x) [<no unit>]: " << aspectRatio << endl;
 }
 
 static Mat createConditioningMatrix(const Mat& points) {
