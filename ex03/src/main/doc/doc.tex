@@ -66,12 +66,12 @@ which show an appropriate calibration object.
 We decided to use two different kinds of camera lens.
 Firstly, a zoom lens, which has been locked at 100mm, such that it can't change
 during several fotos.
-Secondly, a 50mm fix lens.
+Secondly, a Canon Lens EF 50mm fix lens.
 Those generated input pictures can be seen in fig. ~\ref{fig:Input pictures}.
 
 \begin{figure}
-  \subfigure[Locked Zoom lens]{\frame{\includegraphics[width=0.49\textwidth]{\generatedImgRootImg/LockedZoom1.JPG}}} \hfill
-  \subfigure[50mm fix lens]{\frame{\includegraphics[width=0.49\textwidth]{\generatedImgRootImg/Festbrennweite1.JPG}}}
+  \subfigure[Zoom (SigmaDC 18-2Canon Lens EF 50mm) Locked at 18mm lens]{\frame{\includegraphics[width=0.49\textwidth]{\generatedImgRootImg/LockedZoom1.JPG}}} \hfill
+  \subfigure[Canon Lens EF 50mm fix lens]{\frame{\includegraphics[width=0.49\textwidth]{\generatedImgRootImg/Festbrennweite1.JPG}}}
   \caption{Input pictures using two different camera lens.}
   \label{fig:Input pictures}
 \end{figure}
@@ -108,8 +108,8 @@ b) Specify important technical information of the used camera
        \item kind                = Digital single-lens reflex.
        \item sensor              = CMOS APS-C 22.3 x 14.9mm (1.6x conversion factor)
        \item resolution          = 5,184 x 3,456 (17.9 recorded [[megapixels]])
-       \item lens 1              = Canon EF lens mount
-       \item lens 2              = Canon EF lens mount
+       \item lens 1              = Zoom (SigmaDC 18-2Canon Lens EF 50mm) Locked at 18mm lens
+       \item lens 2              = Canon Lens EF 50mm fix lens
        \item ISO range           = ISO 100 to 6400 (expandable to 12800)
        \item flash               = Canon EOS flash system E-TTL II automatic built-in pop-up
        \item Metering modes      = Evaluative, Spot (4 percent at center), Partial (9 percent at center), Center-weighted average
@@ -126,34 +126,34 @@ Those point correspondences can be found in fig. ~\ref{fig:Point Correspondences
 considering each input image.
 
 \begin{figure}
-  \subfigure[Locked Zoom lens]{
+  \subfigure[Zoom (SigmaDC 18-2Canon Lens EF 50mm) Locked at 18mm lens]{
     \begin{tabular}{ l || c | c || c| c| c}
 	&\multicolumn{2}{|c||}{Image points [pix]}&\multicolumn{3}{|c}{Image points [cm]} \\
       No & x & y & X & Y & Z\\
       \hline
-      1 & 5 & 6 &  0   & -49.6 & 40\\
-      2 & 8 & 9 &  0   &   0   & 40\\
-      3 & 8 & 9 & 49.6 &   0   & 40\\
-      4 & 8 & 9 &  0   & -49.6 &  0\\
-      5 & 8 & 9 &  0   &   0   &  0\\
-      6 & 8 & 9 & 49.6 &   0   &  0\\
+      1 &  748 &  248 &  0   & -49.6 & 40\\
+      2 & 2370 &  346 &  0   &   0   & 40\\
+      3 & 3982 &  270 & 49.6 &   0   & 40\\
+      4 &  886 & 1964 &  0   & -49.6 &  0\\
+      5 & 2354 & 1612 &  0   &   0   &  0\\
+      6 & 3790 & 1991 & 49.6 &   0   &  0\\
     \end{tabular}
   } \hfill
-  \subfigure[50mm fix lens]{
+  \subfigure[Canon Lens EF 50mm fix lens]{
     \begin{tabular}{ l || c | c || c| c| c}
 	&\multicolumn{2}{|c||}{Image points [pix]}&\multicolumn{3}{|c}{Image points [cm]} \\
       No & x & y & X & Y & Z\\
       \hline
-      1 & 5 & 6 &  0   & -49.6 & 40\\
-      2 & 8 & 9 &  0   &   0   & 40\\
-      3 & 8 & 9 & 49.6 &   0   & 40\\
-      4 & 8 & 9 &  0   & -49.6 &  0\\
-      5 & 8 & 9 &  0   &   0   &  0\\
-      6 & 8 & 9 & 49.6 &   0   &  0\\
+      1 & 748  & 484  &  0   & -49.6 & 40\\
+      2 & 2136 & 297  &  0   &   0   & 40\\
+      3 & 3883 & 512  & 49.6 &   0   & 40\\
+      4 & 803  & 2167 &  0   & -49.6 &  0\\
+      5 & 2299 & 1782 &  0   &   0   &  0\\
+      6 & 3784 & 2189 & 49.6 &   0   &  0\\
     \end{tabular}
   }
-  \subfigure[Locked Zoom lens]{\frame{\includegraphics[width=0.49\textwidth]{\generatedImgRootImg/LockedZoom1Visualisation.JPG}}} \hfill
-  \subfigure[50mm fix lens]{\frame{\includegraphics[width=0.49\textwidth]{\generatedImgRootImg/Festbrennweite1Visualisation.JPG}}}
+  \subfigure[Zoom (SigmaDC 18-2Canon Lens EF 50mm) Locked at 18mm lens]{\frame{\includegraphics[width=0.49\textwidth]{\generatedImgRootImg/LockedZoom1Visualisation.JPG}}} \hfill
+  \subfigure[Canon Lens EF 50mm fix lens]{\frame{\includegraphics[width=0.49\textwidth]{\generatedImgRootImg/Festbrennweite1Visualisation.JPG}}}
   \caption{Point Correspondences.}
   \label{fig:Point Correspondences}
 \end{figure}
@@ -200,10 +200,7 @@ decomposition.
   One for each specific lens.
   These matrices include two transformations: 
   Firstly, the translation of the centroid of all points to the origin.
-  In the code, the following function realizes the transformations:
-  \begin{lstlisting}
-  Mat tBase = getCondition2D(base);
-  \end{lstlisting}
+  
   Secondly, this function realizes the the scaling of the mean distance to origin to one.
 
   \subsection{Create design matrix}
@@ -217,25 +214,12 @@ decomposition.
   \end{array} \right) 
   \end{align}
 
-  In the code, the following function realizes the design matrix:
-  \begin{lstlisting}
-  Mat getDesignMatrix_homography3D(Mat& base, Mat& attach);
-  \end{lstlisting}
-
   \subsection{Solve equation system with SVD and Reshape}
 
   The linear homogeneous equation system is solved with the Single Value Decomposition.
   \begin{align}
   Ap=0, p=(a,b,c,d,e,f,g,h,j,k,l)^T 
   \end{align}
-
-  In the code, the following function realizes the solution:
-  \begin{lstlisting}
-  Mat H = solve_dlt(design);
-  \end{lstlisting}
-
-  This function uses the function compute(A, d, u, vt, 0); that computes U, D and V matrices.
-  D and V are in decending order, such that the last row of V stands for the parameters of $P$. 
 
   Afterwards, the reshape is realized with this function as well.
   \begin{align}
@@ -254,11 +238,6 @@ that is Euclidean normalized is calculated as follows:
 P=T'^{-1}\tilde{P}T
 \end{align}
 
-In the code, the following function realizes the solution:
-\begin{lstlisting}
-decondition(tBase, tAttach, H);
-\end{lstlisting}
-
 After all steps, the final projection matrix P looks like in the folloging:
 
 \begin{align}
@@ -268,17 +247,30 @@ p_{11} & p_{12} & p_{13} & p_{14} \\
 p_{21} & p_{22} & p_{23} & p_{24} \\
 p_{31} & p_{32} & p_{33} & p_{34}
 \end{array} \right) 
-=
-\left( \begin{array}{cccc}
-a & b & c & d \\
-e & f & g & h \\
-i & j & k & j
-\end{array} \right) 
 \end{align}
-
 In the following section, we refer to P's elements using the following nomenclature:\\
 $p_1=[p_{11} \  p_{21} \  p_{31}]^T$, $p_2=[p_{12} \  p_{22} \  p_{32}]^T$, $p_3=[p_{13} \  p_{23} \  p_{33}]^T$ and $p_4=[p_{14} \  p_{24} \  p_{34}]^T$.\\
 $m^{3}=[p_{31} \  p_{32} \  p_{33}]$ and $M=[p_{1} \  p_{2} \  p_{3}]$.
+
+W.r.t. the used two lenses, the specific projection matrices can be seen in the following:
+
+\begin{tabular}{ l || p{7cm} || p{6cm}}
+      Matrix & Zoom (SigmaDC 18-2Canon Lens EF 50mm) Locked at 18mm & Canon Lens EF 50mm \\
+      \hline
+      $P$ & $\approx
+\left( \begin{array}{cccc}
+ 6.73    & 25.77     &  -2.98    & 1753.2505    \\
+-2.11    &  2.35     & -24.07    & 1201.3021    \\
+-0.00    &  0.004     &  -0.001   &    0.7452
+\end{array} \right)$  &  
+$\approx
+\left( \begin{array}{cccc}
+13.26    & 20.74    &  -1.29  & 1465.709 \\
+1.85     & -1.56    & -23.88  & 1136.5 \\
+-0.025    &  0.002    &  -0.0007  &    0.64
+\end{array} \right)$  \\
+\end{tabular}
+
 
 \section{Interpretation of the Projection Matrix:}
 
@@ -288,7 +280,7 @@ Having then the the calibration matrix R and the rotation matrix Q,
 all eleven parameters of the interior and exterior orientation are derived.
 Although the projection center already could be derived, it is done together with the other derivations.
 
-RQ-decomposition ...
+But first of all, the RQ-decomposition is applied.
 
 The upper triangular matrix R can be used for the derivation of the interior orientation.
 Hence, it can also be called as the calibration matrix K. that can be seen in the following:
@@ -300,15 +292,35 @@ a_x & s   & x_0 \\
 0   & 0   & 1
 \end{array} \right) 
 \end{align}
+
+W.r.t. the used two lenses, the specific calibration matrices can be seen in the following:
+
+\begin{tabular}{ l ||p{7cm} || p{6cm}}
+      Matrix & Zoom (SigmaDC 18-2Canon Lens EF 50mm) Locked at 18mm & Canon Lens EF 50mm \\
+      \hline
+      $K$ & $\approx
+\left( \begin{array}{cccc}
+22.99 & -0.244 & 13.776841 \\
+ 0        & 22.56   & 8.98 \\
+ 0        &  0          & 0.006
+\end{array} \right)$  &  
+$\approx
+\left( \begin{array}{cccc}
+23.96 & -0.19 & 5.79 \\
+ 0        & 23.52   & 4.78 \\
+ 0        &  0          & 0.002
+\end{array} \right)$  \\
+\end{tabular}
+
 Hence, the first five parameters can be derived as follows:
 
-\begin{tabular}{ l l || c || c}
-      No & parameter & Locked Zoom & 50mm \\
+\begin{tabular}{ l l || p{6cm} || p{6cm}}
+      No       & parameter                     & Zoom (SigmaDC 18-2Canon Lens EF 50mm) Locked at 18mm & Canon Lens EF 50mm \\
       \hline
-      1.) & principle distance $a_x$ & =... &  =... \\
-      2.) & skew $s$ & =... &  =...   \\
-      3.)  4.) & principle point ($x_0, y_0$) & =... & =...\\
-      5.) & aspect ratio $\gamma=a_y/a_x$ & =... &  =... 
+      1.)      & principle distance $a_x$      & =22.9907   &  =23.9607px \\
+      2.)      & skew $s$                      & =-0.244733 &  =-0.185831   \\
+      3.)  4.) & principle point ($x_0, y_0$)  & =(13.776841; 8.9798031)px &  =(5.7922163; 4.7773986)px\\
+      5.)      & aspect ratio $\gamma=a_y/a_x$ & =0.981189 &  =0.981761 
 \end{tabular}
 
 The orthogonal matrix Q can be used for the derivation of the exterior orientation.
@@ -318,14 +330,34 @@ Q=R=Q_z^TQ_y^TQ_x^T
 \end{align}
 So the rotation matrix R includes the single rotations along the z axis using $Q_z^T$,
 along the y axis using $Q_y^T$ and along the x axis using $Q_x^T$.
+
+W.r.t. the used two lenses, the specific rotation matrices can be seen in the following:
+
+\begin{tabular}{ l || p{6cm} || p{6cm}}
+      Matrix & Zoom (SigmaDC 18-2Canon Lens EF 50mm) Locked at 18mm & Canon Lens EF 50mm \\
+      \hline
+      $R$ & $\approx
+\left( \begin{array}{cccc}
+ 0.71 &  0.71 &  0.007 \\
+ 0.18 & -0.17 & -0.97 \\
+-0.69  &  0.69 & -0.25
+\end{array} \right)$  &  
+$\approx
+\left( \begin{array}{cccc}
+ 0.72 &  0.69 &  0.01 \\
+ 0.22 & -0.21 & -0.96  \\
+-0.66 &  0.69 & -0.30
+\end{array} \right)$  \\
+\end{tabular}
+
 Hence, the next three parameters can be derived as follows:
 
-\begin{tabular}{ l l || c || c}
-      No & parameter & Locked Zoom & 50mm \\
+\begin{tabular}{ l l || p{6cm} || p{6cm}}
+      No & parameter & Zoom (SigmaDC 18-2Canon Lens EF 50mm) Locked at 18mm & Canon Lens EF 50mm \\
       \hline
-      6.) & $\omega=atan(-r_{32}/r_{33})$ & =... &  =... \\
-      7.) & $\phi=asin(r_{31})$ & =... &  =...  \\
-      8.) & $\kappa=atan(-r_{21}/r_{11})$ & =... & =...
+      6.) & $\omega=atan(-r_{32}/r_{33})$ & =1.22634rad &  =1.16297rad \\
+      7.) & $\phi=asin(r_{31})$ & =-0.755249rad &  =-0.726803rad  \\
+      8.) & $\kappa=atan(-r_{21}/r_{11})$ & =-0.248502rad & =-0.290129rad
 \end{tabular}
 
 The projection matrix P can be used for the derivation of the center $C=(X_0,Y_0,Z_0,W_0)$
@@ -336,13 +368,13 @@ c_i=(-1)^i det(\tilde{P}_i),
 where $\tilde{P}_i$ is the matrix P without column i for i=1,...,4.
 Hence, the derivation of the last three parameters can be seen in the following:
 
-\begin{tabular}{ l l || c || c}
-      No & parameter & Locked Zoom & 50mm \\
+\begin{tabular}{ l l || p{6cm} || p{6cm}}
+      No & parameter & Zoom (SigmaDC 18-2Canon Lens EF 50mm) Locked at 18mm & Canon Lens EF 50mm \\
       \hline
-      9.) & $X_0=det[p2,p3,p4]$ & =... &  =... \\
-      10.) & $Y_0=det[p1,p3,p4]$ & =... &  =...  \\
-      11.) & $Z_0=det[p1,p2,p4]$ & =... & =...\\
-      Add.) & $W_0=det[p1,p2,p3]$ & =... & =...
+      9.) & $X_0=det[p2,p3,p4]$ & =-90.238335 &  =-187.77623 \\
+      10.) & $Y_0=det[p1,p3,p4]$ & =0 & =   0       \\
+      11.) & $Z_0=det[p1,p2,p4]$ & =0 & =   0       \\
+      Add.) & $W_0=det[p1,p2,p3]$ & =1 &=   1
 \end{tabular}
 
 a.) Explain the geometric meaning of the extracted parameters in brief.
@@ -372,7 +404,27 @@ For all the complex changes, there is used just one simple projection matrix.
 Its calculation, use and interpretation is very easy and simplifies a lot,
 but is for very exact calculations not the ideal choice.\\ 
 
-How precise is the camera orientation determined...\\
+In order to answer how precise the camera orientation is determined,
+we compared the 11 parameters of a first run with the 11 parameters of a second run.
+The differences of the two runs are visualized in the following table:
+
+
+\begin{tabular}{ l l || p{4cm} || p{3.5cm}}
+      No & Changed parameter & Zoom (SigmaDC 18-2Canon Lens EF 50mm) Locked at 18mm & Canon Lens EF 50mm \\
+      \hline
+               & 2d point differences          & (6;0),(-6;5),(16;0),(6;6), (-6;6),(-5;0)px   &  (0;-6),(0;5),(5;0),(5;-5),(0;0),(0;0)px \\
+      1.)      & principle distance $a_x$      & =-0.0597px   &  =-0.0187px \\
+      2.)      & skew $s$                      & =-0.0385 &  =0.2182   \\
+      3.)  4.) & principle point ($x_0, y_0$)  & =(-0.0406; 0.2907)px &  =(0.1665; 0.3916)px\\
+      5.)      & aspect ratio $\gamma=a_y/a_x$ & =0.0022 &  =-0.0011 \\
+      6.) & $\omega=atan(-r_{32}/r_{33})$ & =-0.0085rad &  =-0.01176rad \\
+      7.) & $\phi=asin(r_{31})$ & =-0.0063rad &  =0.0036rad  \\
+      8.) & $\kappa=atan(-r_{21}/r_{11})$ & =-0.0043rad & =-0.0096rad \\
+      9.) & $X_0=det[p2,p3,p4]$ & =0.9731 &  =6.1444 \\
+      10.) & $Y_0=det[p1,p3,p4]$ & =0 & =   0       \\
+      11.) & $Z_0=det[p1,p2,p4]$ & =0 & =   0       \\
+      Add.) & $W_0=det[p1,p2,p3]$ & =1 &=   1
+\end{tabular}
 
 In the end, the quality depends on the following points:
 \begin{itemize} 
