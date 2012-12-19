@@ -4,4 +4,5 @@ CMakeLists.txt.user
 *.zip
 *.png
 *.jpg
+*.JPG
 *.jpeg
