@@ -12,7 +12,13 @@ if [ ! -f "${EXECUTABLE}" ]; then
 fi
 
 cd "${TARGET_DIR}"
-"${EXECUTABLE}" \
-	"${RESOURCES_DIR}/calibrationObject.png" \
-	"${RESOURCES_DIR}/objectPonitFile.txt"
+
+ARGUMENTS="${RESOURCES_DIR}/img/Festbrennweite1.JPG ${RESOURCES_DIR}/Points.txt"
+
+if [ "${1}" = "debug" ]; then
+	echo "ARGUMENTS: ${ARGUMENTS}"
+	ddd "${EXECUTABLE}" &
+else
+	"${EXECUTABLE}" ${ARGUMENTS}
+fi
 
