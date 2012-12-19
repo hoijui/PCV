@@ -3,9 +3,13 @@
 // Author      : Ronny Haensch
 // Version     : 1.0
 // Copyright   : -
-// Description : loads calibration image and calibrates camera
+// Description : Loads calibration image and calibrates camera
+// Group       : Marcus Grum (), Robin Vobruba (), Jens Jawer () und Marcus Pannwitz (343479)
 //============================================================================
 
+#ifdef _WIN32
+	#include "stdafx.h"
+#endif
 #include <iostream>
 #include <fstream>
 #include <opencv2/opencv.hpp>
@@ -78,7 +82,7 @@ int main(int argc, char** argv) {
 	return 0;
 }
 
-// extract and print information about interior and exterior orientation from camera (all 11 parameters)
+// Extract and print information about interior and exterior orientation from camera (all 11 parameters)
 /*
 P	The 3x4 projection matrix
 */
@@ -87,56 +91,49 @@ void interprete(Mat& P) {
 	// see pcv8_WS1213_cameramodel.pdf page 11+
 	// see pcv9_WS1213_projectionmatrix.pdf page 9
 
-	Mat M = P.colRange(0, 2);
-	Mat upper(3, 3, P.type());
-	Mat rest(3, 3, P.type());
-	RQDecomp3x3(M, upper, rest);
-	Mat rotationMatrix = rest;
-	Mat calibrationMatrix = upper;
+	Mat M(P, Rect(0, 0, 3, 3));
+	Mat Q_x = Mat::eye(3, 3, CV_32FC1);
+	Mat Q_y = Mat::eye(3, 3, CV_32FC1);
+	Mat Q_z = Mat::eye(3, 3, CV_32FC1);
+	
+	float t = sqrt( pow(M.at<float>(2, 1), 2) + pow(M.at<float>(2, 2), 2) );
+	float s = -M.at<float>(2, 1) / t;
+	float c =  M.at<float>(2, 2) / t;
+	Q_x.at<float>(1, 1) = Q_x.at<float>(2, 2) = c;
+	Q_x.at<float>(1, 2) = -s;
+	Q_x.at<float>(2, 1) =  s;
+	
+	Mat M_1 = M * Q_x;
+	M_1.at<float>(2, 1) = 0;
+	
+	t = sqrt( pow(M_1.at<float>(2, 0), 2) + pow(M_1.at<float>(2, 2), 2) );
+	s = M.at<float>(2, 0) / t;
+	c = M.at<float>(2, 2) / t;
+	Q_y.at<float>(0, 0) = Q_x.at<float>(2, 2) = c;
+	Q_y.at<float>(0, 2) =  s;
+	Q_y.at<float>(2, 0) = -s;
 
-	Mat P234 = P.colRange(1, 3);
-	Mat P134(3, 3, P.type());
-	P134.row(0) = P.row(0);
-	P134.row(1) = P.row(2);
-	P134.row(2) = P.row(3);
-	Mat P124(3, 3, P.type());
-	P134.row(0) = P.row(0);
-	P134.row(1) = P.row(1);
-	P134.row(2) = P.row(3);
-	Mat P123 = P.colRange(0, 2);
+	Mat M_2 = M_1 * Q_y;
+	M_2.at<float>(2, 0) = M_2.at<float>(2, 1) = 0;
+	
+	t = sqrt( pow(M_1.at<float>(1, 0), 2) + pow(M_1.at<float>(1, 1), 2) );
+	s = -M.at<float>(1, 0) / t;
+	c =  M.at<float>(1, 1) / t;
+	Q_z.at<float>(0, 0) = Q_x.at<float>(1, 1) = c;
+	Q_z.at<float>(0, 1) = -s;
+	Q_z.at<float>(1, 0) =  s;
 
-	Mat projectionCenter(3, 1, CV_32FC1);
-	projectionCenter.at<float>(0, 0) = determinant(P234);
-	projectionCenter.at<float>(1, 0) = determinant(P134);
-	projectionCenter.at<float>(2, 0) = determinant(P124);
-	const float W = determinant(P123);
-	projectionCenter = projectionCenter / W;
+	Mat M_3 = M_2 * Q_z;
+	M_2.at<float>(1, 0) = M_2.at<float>(2, 0) = M_2.at<float>(2, 1) = 0;
 
-	Mat principlePoint(2, 1, CV_32FC1);
-	principlePoint.at<float>(0, 0) = calibrationMatrix.at<float>(0, 3);
-	principlePoint.at<float>(1, 0) = calibrationMatrix.at<float>(1, 3);
+	Mat R = M * Q_x * Q_y * Q_z;
+	Mat Q = Q_z.t() * Q_y.t() * Q_x.t();
 
-	const float principleDistance = calibrationMatrix.at<float>(0, 0);
-
-	const float skew = calibrationMatrix.at<float>(0, 1);
-
-	float omega = 0.0f; // TODO extract from rotation matrix
-	float phi = 0.0f; // TODO extract from rotation matrix
-	float kappa = 0.0f; // TODO extract from rotation matrix
-
-	// Interior orientation
-	cout << "C (projection center): " << projectionCenter << endl;
-	cout << "R (rotation matrix): " << rotationMatrix << endl;
-	cout << "Rotation angles (omega, phi, kappa): " << omega << ", " << phi << ", " << kappa << endl;
-
-	// Exterior orientation
-	cout << "alpha_x (principle distance) [px]: " << principleDistance << endl;
-	cout << "s (skew): " << skew << endl;
-	cout << "principle point (x_0, y_0) [px]: " << principlePoint << endl;
-	const float aspectRatio = 0.0f;
-	cout << "aspect ratio (gamme = alpha_y / alpha_x) [<no unit>]: " << aspectRatio << endl;
-
-	// TODO
+	cout << "Interpretation of the 3x4 projection matrix" << endl;
+	cout << "Matrix R:" << endl;
+	cout << R << endl;
+	cout << endl << "Matrix Q:" << endl;
+	cout << Q << endl;
 }
 
 static Mat createConditioningMatrix(const Mat& points) {
@@ -162,9 +159,9 @@ static Mat createConditioningMatrix(const Mat& points) {
 	averageSqDist /= (Scalar)n;
 	Scalar invAverageSqDist = (Scalar)1 / averageSqDist;
 	Mat stdDeviationNormalization = Mat::eye(d, d, points.type());
-	stdDeviationNormalization = stdDeviationNormalization / averageSqDist;
+	//stdDeviationNormalization = stdDeviationNormalization / averageSqDist;
 
-	return stdDeviationNormalization * centeringTranslation;
+	//return stdDeviationNormalization * centeringTranslation;
 }
 
 // estimate projection matrix
@@ -177,57 +174,15 @@ Mat calibrate(Mat& points2D, Mat& points3D) {
 
 	// see pcv9_WS1213_projectionmatrix.pdf page 7
 
-	const int n = points2D.cols;
+	Mat ConMat2D = getCondition2D(points2D);
+	Mat ConMat3D = getCondition3D(points3D);
+	Mat TransfPoints2D = transform(ConMat2D, points2D);
+	Mat TransfPoints3D = transform(ConMat3D, points3D);
+	Mat DesMat = getDesignMatrix_camera(TransfPoints2D, TransfPoints3D);
+	Mat EstProjMat = solve_dlt(DesMat);
+	decondition(ConMat2D, ConMat3D, EstProjMat);
 
-	const Mat conditioner2D = createConditioningMatrix(points2D); // T'
-	const Mat conditioner3D = createConditioningMatrix(points3D); // T
-
-	// condition
-	const Mat points2DConditioned = conditioner2D * points2D;
-	const Mat points3DConditioned = conditioner3D * points3D;
-
-	Mat designMatrix = Mat::zeros(2*n, 12, points2D.type());
-	//vector<Mat> designMatrices;
-	for (int c = 0; c < n; ++c) {
-		const float u = points2DConditioned.at<float>(0, c);
-		const float v = points2DConditioned.at<float>(1, c);
-		const float w = points2DConditioned.at<float>(2, c);
-		const Mat& X = points3DConditioned.col(c);
-		//Mat designMatrix = Mat::zeros(2, 12, points2D.type());
-		// -w * X^T
-		designMatrix.at<float>(2*c + 0, 0)  = -w * X.at<float>(0);
-		designMatrix.at<float>(2*c + 0, 1)  = -w * X.at<float>(1);
-		designMatrix.at<float>(2*c + 0, 2)  = -w * X.at<float>(2);
-		designMatrix.at<float>(2*c + 0, 3)  = -w * X.at<float>(3);
-		// -w * X^T
-		designMatrix.at<float>(2*c + 1, 4)  = -w * X.at<float>(0);
-		designMatrix.at<float>(2*c + 1, 5)  = -w * X.at<float>(1);
-		designMatrix.at<float>(2*c + 1, 6)  = -w * X.at<float>(2);
-		designMatrix.at<float>(2*c + 1, 7)  = -w * X.at<float>(3);
-		// u * X^T
-		designMatrix.at<float>(2*c + 0, 8)  = u * X.at<float>(0);
-		designMatrix.at<float>(2*c + 0, 9)  = u * X.at<float>(1);
-		designMatrix.at<float>(2*c + 0, 10) = u * X.at<float>(2);
-		designMatrix.at<float>(2*c + 0, 11) = u * X.at<float>(3);
-		// v * X^T
-		designMatrix.at<float>(2*c + 1, 8)  = v * X.at<float>(0);
-		designMatrix.at<float>(2*c + 1, 9)  = v * X.at<float>(1);
-		designMatrix.at<float>(2*c + 1, 10) = v * X.at<float>(2);
-		designMatrix.at<float>(2*c + 1, 11) = v * X.at<float>(3);
-
-		//designMatrices.push_back(designMatrix);
-	}
-
-	// DEPRECATED TODO make one big design matrix with columns merged?
-
-	Mat p;
-	SVD::solveZ(designMatrix, p); // designMatrix * p = 0
-
-	Mat Ptilde = p.reshape(3, 4);
-
-	Mat P = conditioner2D * Ptilde * conditioner3D;
-
-	return P;
+	return EstProjMat;
 }
 
 // solve homogeneous equation system by usage of SVD
@@ -237,7 +192,9 @@ return		the estimated projection matrix
 */
 Mat solve_dlt(Mat& A) {
 
-	// TODO
+	Mat X;
+	SVD::solveZ(A, X);
+	return X.reshape(1, 3);
 }
 
 // decondition a projection matrix that was estimated from conditioned point clouds
@@ -248,7 +205,8 @@ P	conditioned projection matrix that has to be un-conditioned (in-place)
 */
 void decondition(Mat& T_2D, Mat& T_3D, Mat& P) {
 
-	// TODO
+	// Decondition of homography matrix P
+	P = T_2D.inv() * P * T_3D;
 }
 
 // define the design matrix as needed to compute projection matrix
@@ -259,7 +217,31 @@ return		the design matrix to be computed
 */
 Mat getDesignMatrix_camera(Mat& points2D, Mat& points3D) {
 
-	// TODO
+	Mat base = points2D;
+	Mat attach = points3D;
+
+	// The design matrix has at least 9 rows in case of 4 points. If there are more points, the number of rows equals two times the number of points
+	Mat T = (base.cols < 5) ? Mat::zeros(9, 12, CV_32FC1) : Mat::zeros(base.cols * 2, 12, CV_32FC1);
+
+	// Loop through all corresponding points
+	for(int i = 0; i < base.cols; ++i)
+	{
+		int y = i * 2;
+
+		for(int j = 0; j < 4; ++j)
+		{
+			// Two times: -w' * x
+			T.at<float>(y + 1, j + 4) = T.at<float>(y, j) = -base.at<float>(2, i) * attach.at<float>(j, i);
+
+			// u' * x
+			T.at<float>(y, 8 + j) = base.at<float>(0, i) * attach.at<float>(j, i);
+
+			// v' * x
+			T.at<float>(y + 1, 8 + j) = base.at<float>(1, i) * attach.at<float>(j, i);
+		}
+	}
+
+	return T;
 }
 
 // apply transformation to set of points
@@ -270,7 +252,19 @@ return		transformed points
 */
 Mat transform(Mat& H, Mat& p) {
 
-	// TODO
+	Mat p_trans = Mat(p.size(), p.type());
+
+	for (int i = 0; i < p.cols; i++)
+	{
+		Mat tPoint = H * p.col(i);
+
+		for (int j = 0; j < tPoint.rows; j++)
+		{
+			p_trans.at<float>(j, i) = tPoint.at<float>(j, 0);
+		}
+	}
+
+	return p_trans;
 }
 
 // get the conditioning matrix of given points
@@ -280,17 +274,89 @@ return		the condition matrix
 */
 Mat getCondition2D(Mat& p) {
 
-	// TODO
+	// calculate center
+	float transX = 0, transY = 0;
+
+	// for each point
+	for(int i = 0; i < p.cols; ++i)
+	{
+		transX += p.at<float>(0, i) / p.at<float>(2, i);
+		transY += p.at<float>(1, i) / p.at<float>(2, i);
+	}
+
+	transX /= p.cols;
+	transY /= p.cols;
+
+	// calculate scale
+	float scaleX = 0, scaleY = 0;
+
+	// for each point
+	for(int i = 0; i < p.cols; ++i)
+	{
+		scaleX += abs((p.at<float>(0, i) / p.at<float>(2, i)) - transX);
+		scaleY += abs((p.at<float>(1, i) / p.at<float>(2, i)) - transY);
+	}
+
+	scaleX /= p.cols;
+	scaleY /= p.cols;
+
+	// build condition matrix
+	Mat cond = Mat::eye(3, 3, CV_32FC1);
+	cond.at<float>(0, 0) = 1 / scaleX;
+	cond.at<float>(0, 2) = -transX / scaleX;
+	cond.at<float>(1, 1) = 1 / scaleY;
+	cond.at<float>(1, 2) = -transY / scaleY;
+
+	return cond;
 }
 
 // get the conditioning matrix of given points
 /*
-p		the points as matrix
-return		the condition matrix 
+	p		the points as matrix
+	return	the condition matrix 
 */
-Mat getCondition3D(Mat& p) {
+Mat getCondition3D(Mat& p)
+{
+	// calculate center
+	float transX = 0, transY = 0, transZ = 0;
 
-	// TODO
+	// for each point
+	for(int i = 0; i < p.cols; ++i)
+	{
+		transX += p.at<float>(0, i) / p.at<float>(3, i);
+		transY += p.at<float>(1, i) / p.at<float>(3, i);
+		transZ += p.at<float>(2, i) / p.at<float>(3, i);
+	}
+
+	transX /= p.cols;
+	transY /= p.cols;
+	transZ /= p.cols;
+
+	// calculate scale
+	float scaleX = 0, scaleY = 0, scaleZ = 0;
+
+	// for each point
+	for(int i = 0; i < p.cols; ++i)
+	{
+		scaleX += abs((p.at<float>(0, i) / p.at<float>(3, i)) - transX);
+		scaleY += abs((p.at<float>(1, i) / p.at<float>(3, i)) - transY);
+		scaleZ += abs((p.at<float>(2, i) / p.at<float>(3, i)) - transZ);
+	}
+
+	scaleX /= p.cols;
+	scaleY /= p.cols;
+	scaleZ /= p.cols;
+
+	// build condition matrix
+	Mat cond = Mat::eye(4, 4, CV_32FC1);
+	cond.at<float>(0, 0) = 1 / scaleX;
+	cond.at<float>(0, 3) = -transX / scaleX;
+	cond.at<float>(1, 1) = 1 / scaleY;
+	cond.at<float>(1, 3) = -transY / scaleY;
+	cond.at<float>(2, 2) = 1 / scaleY;
+	cond.at<float>(2, 3) = -transZ / scaleZ;
+
+	return cond;
 }
 
 /* *****************************
