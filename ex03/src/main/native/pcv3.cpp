@@ -97,6 +97,8 @@ void interprete(Mat& P) {
 	RQDecomp3x3(M, upper, rest);
 	Mat rotationMatrix = rest;
 	Mat calibrationMatrix = upper;
+	cout << endl << "RQ-decomp Q or R(otation): " << endl << rest << endl;
+	cout << endl << "RQ-decomp R or K(alibration): " << endl << upper << endl;
 
 	Mat P234 = P.colRange(1, 4);
 	Mat P134(3, 3, P.type());
@@ -128,17 +130,18 @@ void interprete(Mat& P) {
 	float phi = asin(rotationMatrix.at<float>(2, 0));
 	float kappa = atan(- rotationMatrix.at<float>(1, 0) / rotationMatrix.at<float>(0, 0));
 
+	const float aspectRatio = calibrationMatrix.at<float>(1, 1) / calibrationMatrix.at<float>(0, 0);
+
 	// Exterior orientation
 	cout << "C (projection center): " << projectionCenter << endl;
-	cout << "R (rotation matrix): " << rotationMatrix << endl;
-	cout << "Rotation angles (omega, phi, kappa): " << omega << ", " << phi << ", " << kappa << endl;
+	cout << "R (rotation matrix): " << endl << rotationMatrix << endl;
+	cout << "Rotation angles (omega, phi, kappa) [radians]: " << omega << ", " << phi << ", " << kappa << endl;
 
 	// Interior orientation
 	cout << "alpha_x (principle distance) [px]: " << principleDistance << endl;
-	cout << "s (skew): " << skew << endl;
+	cout << "s (skew) [<no unit>]: " << skew << endl;
 	cout << "principle point (x_0, y_0) [px]: " << principlePoint << endl;
-	const float aspectRatio = 0.0f;
-	cout << "aspect ratio (gamme = alpha_y / alpha_x) [<no unit>]: " << aspectRatio << endl;
+	cout << "aspect ratio (gamma = alpha_y / alpha_x) [<no unit>]: " << aspectRatio << endl;
 }
 
 static Mat createConditioningMatrix(const Mat& points) {
