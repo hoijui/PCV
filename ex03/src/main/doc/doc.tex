@@ -402,12 +402,16 @@ All in all, the whole calibration process does not try to model the physics of t
 (e.g. the exact light ray changes of a combination of several lenses).
 For all the complex changes, there is used just one simple projection matrix.
 Its calculation, use and interpretation is very easy and simplifies a lot,
-but is for very exact calculations not the ideal choice.\\ 
+but is for very exact calculations not the ideal choice.
 
-In order to answer how precise the camera orientation is determined,
+The whole calibration process is very imprecise.
+All corresponding points from the picture to the real world are selected manually 
+by clicking on the associated area in the image.
+To do this, in a proper way is very difficult. In consequence, the camera orientation
+is not very precise determined.\\
+In order to get an impression how precise the camera orientation is determined,
 we compared the 11 parameters of a first run with the 11 parameters of a second run.
 The differences of the two runs are visualized in the following table:
-
 
 \begin{tabular}{ l l || p{4cm} || p{3.5cm}}
       No & Changed parameter & Zoom (SigmaDC 18-2Canon Lens EF 50mm) Locked at 18mm & Canon Lens EF 50mm \\
