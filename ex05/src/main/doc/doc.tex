@@ -1,0 +1,246 @@
+\documentclass[a4paper,headings=small]{scrartcl}
+\KOMAoptions{DIV=12}
+
+\usepackage[utf8x]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{listings}
+\usepackage{subfigure}
+
+% define style of numbering
+\numberwithin{equation}{section} % use separate numbering per section
+\numberwithin{figure}{section}   % use separate numbering per section
+
+% instead of using indents to denote a new paragraph, we add space before it
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{10pt plus 1pt minus 1pt}
+
+\title{Photogrammetric Computer Vision - WS12/13 \\ Excercise 5 \\ \emph{Orientation of an image pair}}
+\author{Team A: Marcus Grum, Robin Vobruba, Marcus Pannwitz, Jens Jawer}
+\date{\today}
+
+\pdfinfo{%
+  /Title    (Photogrammetric Computer Vision - WS12/13 - Excercise 5 - Orientation of an image pair)
+  /Author   (Team A: Marcus Grum, Robin Vobruba, Marcus Pannwitz, Jens Jawer)
+  /Creator  ()
+  /Producer ()
+  /Subject  ()
+  /Keywords ()
+}
+
+% Simple picture reference
+%   Usage: \image{#1}{#2}{#3}
+%     #1: file-name of the image
+%     #2: percentual width (decimal)
+%     #3: caption/description
+%
+%   Example:
+%     \image{myPicture}{0.8}{My huge house}
+%     See fig. \ref{fig:myPicture}.
+\newcommand{\image}[3]{
+	\begin{figure}[htbp]
+		\centering
+		\includegraphics[width=#2\textwidth]{#1}
+		\caption{#3}
+		\label{fig:#1}
+	\end{figure}
+}
+\newcommand{\generatedImgRootImg}{../resources/img}
+\newcommand{\generatedImgRootTarget}{../../../target}
+
+
+\begin{document}
+
+\maketitle
+
+In this exercise where an orientation of an image pair is realized using epipolar lines.
+The epipolar geometry can be represented by the fundamental matrix
+when we are using algebraic projective geometry. 
+The task consisted of generating the fundamental matrix from selfmade images 
+and finding with this the corresponding epipolar lines, 
+such that a geometric space impression will become visible.
+
+\section{Image Acquisition:}
+
+For the beginning, we were asked to take pictures with a digital camera,
+which show an appropriate observation object from two different perspectives.
+We decided to take pictures from..., such that it can't change
+during several fotos that were taken by the same camera.
+Firstly, the object can be seen, ...
+Secondly, ....
+Those generated input pictures can be seen in fig. ~\ref{fig:Input pictures}.
+
+\begin{figure}
+  \subfigure[Left perspective.]{\frame{\includegraphics[width=0.49\textwidth]{\generatedImgRootImg/Ex5_2.png}}} \hfill
+  \subfigure[Right perspective.]{\frame{\includegraphics[height=0.49\textwidth]{\generatedImgRootImg/Ex5_1.png}}}
+  \caption{Input pictures using the same camera configuration.}
+  \label{fig:Input pictures}
+\end{figure}
+  
+In the fokus, one can see ...
+We were asked to use a general convergent image arrangement...
+ 
+\section{Homologous points:}
+
+Then, we were asked to manually at least 8 homologous points x ↔ x' in the image pair.
+Those point correspondences can be found in fig. ~\ref{fig:Point Correspondences}
+considering each input image.
+
+\begin{figure}
+  \subfigure[Left perspective.]{
+    \begin{tabular}{ l || c | c || c| c| c}
+	&\multicolumn{2}{|c||}{Image points [pix]}&\multicolumn{3}{|c}{Image points [cm]} \\
+      No & x & y & X & Y & Z\\
+      \hline
+      1 &  748 &  248 &  0   & -49.6 & 40\\
+      2 & 2370 &  346 &  0   &   0   & 40\\
+      3 & 3982 &  270 & 49.6 &   0   & 40\\
+      4 &  886 & 1964 &  0   & -49.6 &  0\\
+      5 & 2354 & 1612 &  0   &   0   &  0\\
+      6 & 3790 & 1991 & 49.6 &   0   &  0\\
+      7 & 3784 & 2189 & 49.6 &   0   &  0\\
+      8 & 3784 & 2189 & 49.6 &   0   &  0\\
+    \end{tabular}
+  } \hfill
+  \subfigure[Right perspective.]{
+    \begin{tabular}{ l || c | c || c| c| c}
+	&\multicolumn{2}{|c||}{Image points [pix]}&\multicolumn{3}{|c}{Image points [cm]} \\
+      No & x & y & X & Y & Z\\
+      \hline
+      1 & 748  & 484  &  0   & -49.6 & 40\\
+      2 & 2136 & 297  &  0   &   0   & 40\\
+      3 & 3883 & 512  & 49.6 &   0   & 40\\
+      4 & 803  & 2167 &  0   & -49.6 &  0\\
+      5 & 2299 & 1782 &  0   &   0   &  0\\
+      6 & 3784 & 2189 & 49.6 &   0   &  0\\
+      7 & 3784 & 2189 & 49.6 &   0   &  0\\
+      8 & 3784 & 2189 & 49.6 &   0   &  0\\
+    \end{tabular}
+  }
+  \subfigure[Left perspective.]{\frame{\includegraphics[width=0.49\textwidth]{\generatedImgRootTarget/PointCorrespondencesL.png}}} \hfill
+  \subfigure[Right perspective.]{\frame{\includegraphics[height=0.49\textwidth]{\generatedImgRootTarget/PointCorrespondencesR.png}}}
+  \caption{Point Correspondences using Homologous points.}
+  \label{fig:Point Correspondences}
+\end{figure}
+
+For a better understanding, those point correspondences have been 
+visualized in fig. ~\ref{fig:Point Correspondences}
+considering each input image as well.
+
+\section{Computation of the Fundamental Matrix:}
+
+Then we were asked to implement a function in C++ for the linear computation of the fundamental
+matrix F using the normalized 8-point-algorithm.
+This matrix F can be used to determine the epipolar line of the left picture
+   \begin{align}
+       l = F^T \cdot x'
+   \end{align}
+and it can be used to determine the epipolar line of the right picture
+   \begin{align}
+       l' = F \cdot x
+   \end{align}
+
+  \subsection{Conditioning}
+
+  In the beginning, the interesting point correspondence matrices are computed for conditioning.
+  One for each specific lens.
+  These matrices include two transformations: 
+  Firstly, the translation of the centroid of all points to the origin.
+
+  Secondly, this function realizes the the scaling of the mean distance to origin to one.
+
+  \subsection{Create design matrix}
+
+  The design matrix is built as follows: \\
+  \begin{align}
+  A_{i}=
+  \left( \begin{array}{ccccccccc}
+  \hat{x_1}\hat{x_1}' & \hat{y_1}\hat{x_1}' & \hat{x_1}' & \hat{x_1}\hat{y_1}' & \hat{y_1}\hat{y_1}' & \hat{y_1}' & \hat{x_1} & \hat{x_1}\hat{y_1} & 1\\
+  \hat{x_2}\hat{x_2}' & \hat{y_2}\hat{x_2}' & \hat{x_2}' & \hat{x_2}\hat{y_2}' & \hat{y_2}\hat{y_2}' & \hat{y_2}' & \hat{x_2} & \hat{x_2}\hat{y_2} & 1\\
+   : & : & : & : & : & : & : & : & : \\
+  \hat{x_n}\hat{x_n}' & \hat{y_n}\hat{x_n}' & \hat{x_n}' & \hat{x_n}\hat{y_n}' & \hat{y_n}\hat{y_n}' & \hat{y_n}' & \hat{x_n} & \hat{x_n}\hat{y_n} & 1
+  \end{array} \right) 
+  \end{align}
+
+  \subsection{Solve equation system with SVD and Reshape}
+
+  The linear homogeneous equation system is solved with the Single Value Decomposition.
+  \begin{align}
+  Af=0, p=(a,b,c,d,e,f,g,h,j)^T 
+  \end{align}
+
+  Afterwards, the reshape is realized with this function as well.
+  \begin{align}
+  \tilde{F}=
+  \left( \begin{array}{cccc}
+  a & b & c \\
+  d & e & f \\ 
+  g & h & j
+  \end{array} \right)
+  \end{align}
+
+  \subsection{Enforce singularity}
+Hence $|\tilde{F}|\neq 0$, we try  to find an optimal version $\tilde{F}^*$, such that
+  \begin{align}
+  ||\tilde{F}-\tilde{F}^*=min||
+  \end{align}
+and
+  \begin{align}
+  |\tilde{F}^*=0|.
+  \end{align}
+We enforce the singularity in using a Singular Value Decomposition backwards.
+In decompose the known $\tilde{F}$,
+  \begin{align}
+  \tilde{F}^*=\tilde{U} diag(d_1,d_2,d_3)\tilde{V}^T.
+  \end{align}  
+we set the last element of the diagonal matrix to 0, such that $\tilde{F}^*$ can be computed
+as follows:
+  \begin{align}
+  \tilde{F}^*=\tilde{U} diag(d_1,d_2,0)\tilde{V}^T.
+  \end{align}
+  \subsection{Deconditioning}
+In order to get back to the original coordinates, a final transformation matrix $H$ 
+that is Euclidean normalized is calculated as follows:
+\begin{align}
+F=T'^{-1}\tilde{F}^{*}T
+\end{align}
+
+\section{Visualization of the fundamental matrix by epipolar lines:}
+
+Point correspondences for both input pictures, 
+as they have been used for the epipolar line search 
+can be found in fig. ~\ref{fig:Point Correspondences}.
+
+Their associated epipolar lines can be found in fig. ~\ref{fig:Epipolar Lines}.
+\begin{figure}
+  \subfigure[Left perspective.]{\frame{\includegraphics[width=0.49\textwidth]{\generatedImgRootTarget/EpipolarLinesL.png}}} \hfill
+  \subfigure[Right perspective.]{\frame{\includegraphics[height=0.49\textwidth]{\generatedImgRootTarget/EpipolarLinesR.png}}}
+  \caption{Epipolar lines using given point correspondences.}
+  \label{fig:Epipolar Lines}
+\end{figure}
+\section{Evaluation:}
+As we can see in the image pair of fig. ~\ref{fig:Point Correspondences},
+the line characteristics are commented in brief in the following:
+...
+
+Based on the computed fundamental matrix $F$, the geometric image error
+is calculated for all points. It is also called Sampson distance
+and measures the symmetric epipolar distance.
+\begin{align}
+  d_{Sampson} = \frac{1}{N} \sum_{i=1}^N \frac{(x'_i F x_i)^2}{(F x_i)_a^2 + (F x_i)_b^2 + (F^T x'_i)_a^2 + (F^T x'_i)_b^2}
+\end{align}
+As $i$ is standing for each point, $N$ is the number of total points, 
+which was in our case 8, $x$ and $x'$ are standing for the image coordinates of a certain
+point and $a$ or $b$ are standing for first or second entry of corresponding vector.
+
+The Sampson distance in our case was $d_{Sampson}=...$
+\section{Printed Code:}
+
+%\lstset{language=<C++>}
+%\begin{lstlisting}
+%test
+%\end{lstlisting}
+\lstinputlisting[breaklines=true]{../native/pcv5.cpp}
+\end{document}
+

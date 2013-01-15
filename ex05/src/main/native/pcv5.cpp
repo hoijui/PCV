@@ -336,7 +336,7 @@ double getError(Mat& p_fst, Mat& p_snd, Mat& F) {
 		const Mat& x_ = p_snd.col(i);
 		const Mat F_x = F*x;
 		const Mat F_T_x_ = F.t()*x_;
-		// sum = sum + (x_*F*x)² / ( (F*x)² + (F*x)² + (F.t()*x_)² + (F.t()*x_)² );
+
 		sum = sum + (pow(Mat(x_.t()*F*x).at<float>(0, 0),2)) / ( (pow((F_x.at<float>(0, 0)),2)) + (pow((F_x.at<float>(1, 0)),2)) + (pow((F_T_x_.at<float>(0, 0)),2)) + (pow((F_T_x_.at<float>(1, 0)),2)));
 	}
 	int N=p_fst.cols;
