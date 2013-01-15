@@ -119,27 +119,27 @@ return	the estimated fundamental matrix
 */
 Mat getFundamentalMatrix(Mat& fst, Mat& snd){
 
-    // coordinate transformation matrices for conditioning
-    Mat tFirst = getCondition2D(fst);
-    Mat tSecond = getCondition2D(snd);
+	// coordinate transformation matrices for conditioning
+	Mat tFirst = getCondition2D(fst);
+	Mat tSecond = getCondition2D(snd);
 
-    // create conditioned matrices
-    Mat cFirst = transform(tFirst, fst);
-    Mat cSecond = transform(tSecond, snd);
+	// create conditioned matrices
+	Mat cFirst = transform(tFirst, fst);
+	Mat cSecond = transform(tSecond, snd);
 
-    // create design matrix, for fundamental matrix between fst and snd
-    Mat design = getDesignMatrix_fundamental(fst, snd);
+	// create design matrix, for fundamental matrix between fst and snd
+	Mat design = getDesignMatrix_fundamental(cFirst, cSecond);
 
-    // svd and reshaping
-    Mat F = solve_dlt(design);
+	// svd and reshaping
+	Mat F = solve_dlt(design);
 
-    // enforce singularity of F: SVD, kill one rank, recompose F
-    forceSingularity(F);
+	// enforce singularity of F: SVD, kill one rank, recompose F
+	forceSingularity(F);
 
-    // creating final fundamental matrix
-    decondition(tFirst, tSecond, F);
+	// creating final fundamental matrix
+	decondition(tFirst, tSecond, F);
 
-    return F;
+	return F;
 }
 
 // solve homogeneous equation system by usage of SVD
@@ -149,9 +149,10 @@ return		the estimated fundamental matrix
 */
 Mat solve_dlt(Mat& A) {
     
-	Mat X;
-	SVD::solveZ(A, X);
-	return X.reshape(1, 3);
+	Mat f = Mat::zeros(1, 9, CV_32FC1);
+	SVD::solveZ(A, f);
+	f = f.reshape(0, 3);
+	return f;
 }
 
 // decondition a fundamental matrix that was estimated from conditioned point clouds
@@ -162,7 +163,8 @@ F	conditioned fundamental matrix that has to be un-conditioned (in-place)
 */
 void decondition(Mat& T_fst, Mat& T_snd, Mat& F){
   
-    F = T_fst.inv() * F * T_snd;
+    //F = T_fst.inv() * F * T_snd;
+    F = T_snd.t() * F * T_fst;
 }
 
 // define the design matrix as needed to compute fundamental matrix
@@ -174,30 +176,30 @@ return		the design matrix to be computed
 Mat getDesignMatrix_fundamental(Mat& fst, Mat& snd){
 
 	// The design matrix has at least 9 rows in case of 8 points. If there are more points, the number of rows equals the number of points
-	Mat T = (fst.cols < 8) ? Mat::zeros(9, 9, CV_32FC1) : Mat::zeros(fst.cols, 9, CV_32FC1);
+	Mat design = (fst.cols < 8) ? Mat::zeros(9, 9, CV_32FC1) : Mat::zeros(fst.cols, 9, CV_32FC1);
 
 	// Loop through all corresponding points
-	for(int i = 0; i < fst.cols; ++i)
-    {
-        float x_fst = fst.at<float>(0, i),
-            x_snd = snd.at<float>(0, i),
-            y_fst = fst.at<float>(1, i),
-            y_snd = snd.at<float>(1, i);
+	for (int i = 0; i < fst.cols; ++i)
+	{
+		float x_fst = fst.at<float>(0, i),
+		x_snd = snd.at<float>(0, i),
+		y_fst = fst.at<float>(1, i),
+		y_snd = snd.at<float>(1, i);
 
-		T.at<float>(i, 0) = x_fst * x_snd;
-		T.at<float>(i, 1) = y_fst * x_snd;
-		T.at<float>(i, 2) = x_snd;
+		design.at<float>(i, 0) = x_fst * x_snd;
+		design.at<float>(i, 1) = y_fst * x_snd;
+		design.at<float>(i, 2) = x_snd;
 
-		T.at<float>(i, 3) = x_fst * y_snd;
-		T.at<float>(i, 4) = y_fst * y_snd;
-		T.at<float>(i, 5) = y_snd;
+		design.at<float>(i, 3) = x_fst * y_snd;
+		design.at<float>(i, 4) = y_fst * y_snd;
+		design.at<float>(i, 5) = y_snd;
 
-		T.at<float>(i, 6) = x_fst;
-		T.at<float>(i, 7) = y_fst;
-		T.at<float>(i, 8) = 1;
+		design.at<float>(i, 6) = x_fst;
+		design.at<float>(i, 7) = y_fst;
+		design.at<float>(i, 8) = 1;
 	}
 
-	return T; 
+	return design;
 }
 
 // apply transformation to set of points
@@ -206,21 +208,8 @@ H		matrix representing the transformation
 p		input points
 return		transformed points
 */
-Mat transform(Mat& H, Mat& p){
-
-	Mat p_trans = Mat(p.size(), p.type());
-
-	for (int i = 0; i < p.cols; i++)
-	{
-		Mat tPoint = H * p.col(i);
-
-		for (int j = 0; j < tPoint.rows; j++)
-		{
-			p_trans.at<float>(j, i) = tPoint.at<float>(j, 0);
-		}
-	}
-
-	return p_trans;
+Mat transform(Mat& H, Mat& p) {
+	return H * p;
 }
 
 // get the conditioning matrix of given points
@@ -228,7 +217,7 @@ Mat transform(Mat& H, Mat& p){
 p		the points as matrix
 return		the condition matrix (already allocated)
 */
-Mat getCondition2D(Mat& p){
+Mat getCondition2D(Mat& p) {
 
 	// calculate center
 	float transX = 0, transY = 0;
@@ -270,18 +259,20 @@ Mat getCondition2D(Mat& p){
 /*
 F	the matrix to be changed
 */
-void forceSingularity(Mat& F){
-    
-    Mat d, u, vt;
+void forceSingularity(Mat& F) {
+
+    Mat U(3, 3, CV_32FC1);
+    Mat d(3, 1, CV_32FC1);
+    Mat Vt(3, 3, CV_32FC1);
 
     // decompose
-    SVD::compute(F, d, u, vt, 0);
+    SVD::compute(F, d, U, Vt);
 
     // set d3 to 0  (enforce rank 2)
-    d.at<float>(2) = 0;
+    d.at<float>(2, 0) = 0;
 
     // recombine
-    F = u * Mat::diag(d) * vt;
+    F = U * Mat::diag(d) * Vt;
 }
 
 // draws epipolar lines in image
@@ -290,26 +281,23 @@ img     target window
 points  points in other image
 F       fundamental matrix between both images
 */
-void visualizeHelper(struct winInfo& win, Mat& points, Mat F){
+void visualizeHelper(struct winInfo& win, Mat& points, Mat F) {
 
-    // for each point
-	for(int i = 0; i < points.cols; ++i)
+	// for each point
+	for (int i = 0; i < points.cols; ++i)
 	{
-		// l' = F * x
+		// l' = F * x or l = F^T * x'
+		Mat x = points.col(i);
+		Mat line = F * x;
+		double a = line.at<float>(0, 0);
+		double b = line.at<float>(1, 0);
+		double c = line.at<float>(2, 0);
 
-        Mat x = Mat(3, 1, CV_32FC1);
-
-        Mat line = F * x;
-
-        double a = line.at<float>(0, 0);
-        double b = line.at<float>(1, 0);
-        double c = line.at<float>(2, 0);
-
-        drawEpiLine(win.img, a, b, c);
+		drawEpiLine(win.img, a, b, c);
 	}
 
-    // update image in windows
-    imshow(win.name.c_str(), win.img);
+	// update image in windows
+	imshow(win.name.c_str(), win.img);
 }
 
 // draws epipolar lines into images
@@ -323,10 +311,10 @@ F	fundamental matrix
 void visualize(struct winInfo& img1, struct winInfo& img2, Mat& p_fst, Mat& p_snd, Mat& F){
 
     // draw epipolar lines for p_fst in img2
-    visualizeHelper(img2, p_fst, F.t());
+    visualizeHelper(img2, p_fst, F);
 
     // draw epipolar lines for p_snd in img1
-    visualizeHelper(img1, p_snd, F);
+    visualizeHelper(img1, p_snd, F.t());
 
     // wait until any key was pressed
     waitKey(0);
@@ -339,10 +327,21 @@ p_snd		second set of points
 F		fundamental matrix
 return		geometric error
 */
-double getError(Mat& p_fst, Mat& p_snd, Mat& F){
+double getError(Mat& p_fst, Mat& p_snd, Mat& F) {
 
-  // To Do
-    return 0;
+	double sum = 0;
+	for(int i = 0; i < p_fst.cols; ++i)
+	{
+		const Mat& x = p_fst.col(i);
+		const Mat& x_ = p_snd.col(i);
+		const Mat F_x = F*x;
+		const Mat F_T_x_ = F.t()*x_;
+		// sum = sum + (x_*F*x)² / ( (F*x)² + (F*x)² + (F.t()*x_)² + (F.t()*x_)² );
+		sum = sum + (pow(Mat(x_.t()*F*x).at<float>(0, 0),2)) / ( (pow((F_x.at<float>(0, 0)),2)) + (pow((F_x.at<float>(1, 0)),2)) + (pow((F_T_x_.at<float>(0, 0)),2)) + (pow((F_T_x_.at<float>(1, 0)),2)));
+	}
+	int N=p_fst.cols;
+
+	return 1/N*sum;
 }
 
 /* ***********************
@@ -462,3 +461,4 @@ void getPoints(int event, int x, int y, int flags, void* param){
     }break;
   }
 }
+
