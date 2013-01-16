@@ -68,16 +68,17 @@ int main(int argc, char** argv) {
     // get corresponding points within the two images
     // start with one point within the first image, then click on corresponding point in second image
     Mat p_fst, p_snd;
-    int numberOfPointPairs = getPoints(fst, snd, p_fst, p_snd);
-waitKey(0);    
-    
-    // DEBUG START !!     wenn debug gelöscht wird, zeile drüber entkommentieren
-    p_fst = (Mat_<float>(3, 8) << 
+
+// comment out if you want to click
+#define PREDEFINED_POINTS 1
+
+#ifdef PREDEFINED_POINTS
+	p_fst = (Mat_<float>(3, 8, CV_32FC1) <<
         84, 61, 64, 140, 190, 139, 63, 43,
         19, 31, 149, 136, 160, 207, 245, 201,
         1, 1, 1, 1, 1, 1, 1, 1);
 
-    p_snd = (Mat_<float>(3, 8) << 
+	p_snd = (Mat_<float>(3, 8, CV_32FC1) <<
         98, 84, 80, 156, 197, 152, 77, 45,
         5, 19, 133, 129, 150, 193, 235, 187,
         1, 1, 1, 1, 1, 1, 1, 1);
@@ -87,8 +88,10 @@ waitKey(0);
     namedWindow( fst.name.c_str(), 0 );
     imshow( snd.name.c_str(), snd.img );
 
-    //int numberOfPointPairs = 8;
-    // DEBUG END !!
+    int numberOfPointPairs = 8;
+#else
+	int numberOfPointPairs = getPoints(fst, snd, p_fst, p_snd);
+#endif
     
     // just some putput
     cout << "Number of defined point pairs: " << numberOfPointPairs << endl;
