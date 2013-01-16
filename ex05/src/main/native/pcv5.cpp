@@ -68,8 +68,8 @@ int main(int argc, char** argv) {
     // get corresponding points within the two images
     // start with one point within the first image, then click on corresponding point in second image
     Mat p_fst, p_snd;
-    // int numberOfPointPairs = getPoints(fst, snd, p_fst, p_snd);
-    
+    int numberOfPointPairs = getPoints(fst, snd, p_fst, p_snd);
+waitKey(0);    
     
     // DEBUG START !!     wenn debug gelöscht wird, zeile drüber entkommentieren
     p_fst = (Mat_<float>(3, 8) << 
@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
     namedWindow( fst.name.c_str(), 0 );
     imshow( snd.name.c_str(), snd.img );
 
-    int numberOfPointPairs = 8;
+    //int numberOfPointPairs = 8;
     // DEBUG END !!
     
     // just some putput
@@ -151,7 +151,8 @@ Mat solve_dlt(Mat& A) {
     
 	Mat f = Mat::zeros(1, 9, CV_32FC1);
 	SVD::solveZ(A, f);
-	f = f.reshape(0, 3);
+	f = f.reshape(1, 3);
+//f = f.reshape(0, 3);
 	return f;
 }
 
@@ -316,6 +317,9 @@ void visualize(struct winInfo& img1, struct winInfo& img2, Mat& p_fst, Mat& p_sn
     // draw epipolar lines for p_snd in img1
     visualizeHelper(img1, p_snd, F.t());
 
+    // save Windows for Doc
+    imwrite("EpipolarLinesL.png", img1.img);
+    imwrite("EpipolarLinesR.png", img2.img);
     // wait until any key was pressed
     waitKey(0);
 }
@@ -395,10 +399,10 @@ void drawEpiLine(Mat& img, double a, double b, double c){
 fst		structure containing fst image
 snd		structure containing image that has to be snded
 p_fst		points within the fst image (to be defined by this method)
-p_snd	points within the second image (to be defined by this method)
+p_snd		points within the second image (to be defined by this method)
 */
 int getPoints(struct winInfo& fst, struct winInfo& snd, Mat& p_fst, Mat& p_snd){
-  
+
     // show input images and install mouse callback
     namedWindow( fst.name.c_str(), 0 );
     imshow( fst.name.c_str(), fst.img );
@@ -408,7 +412,7 @@ int getPoints(struct winInfo& fst, struct winInfo& snd, Mat& p_fst, Mat& p_snd){
     setMouseCallback(snd.name.c_str(), getPoints, (void*)(&snd));
     // wait until any key was pressed
     waitKey(0);
-    
+
     // allocate memory for point-lists (represented as matrix)
     p_fst = Mat(3, pointList.size()/2, CV_32FC1);
     p_snd = Mat(3, pointList.size()/2, CV_32FC1);
@@ -424,6 +428,10 @@ int getPoints(struct winInfo& fst, struct winInfo& snd, Mat& p_fst, Mat& p_snd){
 	p_snd.at<float>(2, n) = 1;
 	n++;
     }
+
+    // save Windows for Doc
+    imwrite("PointCorrespondencesL.png", fst.img);
+    imwrite("PointCorrespondencesR.png", snd.img);
 
     // close windows
     destroyWindow( fst.name.c_str() );
