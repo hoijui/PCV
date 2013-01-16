@@ -65,21 +65,21 @@ such that a geometric space impression will become visible.
 
 For the beginning, we were asked to take pictures with a digital camera,
 which show an appropriate observation object from two different perspectives.
-We decided to take pictures from..., such that it can't change
-during several fotos that were taken by the same camera.
-Firstly, the object can be seen, ...
-Secondly, ....
+We decided to take pictures from an every day figure, such that it can't change
+during several fotos were taken by the same camera.
+Firstly, the object can be seen from a left perspective.
+Secondly, it can be seen from the right.
 Those generated input pictures can be seen in fig. ~\ref{fig:Input pictures}.
 
 \begin{figure}
-  \subfigure[Left perspective.]{\frame{\includegraphics[width=0.49\textwidth]{\generatedImgRootImg/Ex5_2.png}}} \hfill
+  \subfigure[Left perspective.]{\frame{\includegraphics[height=0.49\textwidth]{\generatedImgRootImg/Ex5_2.png}}} \hfill
   \subfigure[Right perspective.]{\frame{\includegraphics[height=0.49\textwidth]{\generatedImgRootImg/Ex5_1.png}}}
   \caption{Input pictures using the same camera configuration.}
   \label{fig:Input pictures}
 \end{figure}
   
-In the fokus, one can see ...
-We were asked to use a general convergent image arrangement...
+In the fokus, one can see a figure from a sweet that is well known and often eaten.
+It is schown in a general convergent image arrangement because we were asked to do so.
  
 \section{Homologous points:}
 
@@ -93,14 +93,14 @@ considering each input image.
 	&\multicolumn{2}{|c||}{Image points [pix]} \\
       No & x & y \\
       \hline
-      1 &  748 &  248\\
-      2 & 2370 &  346\\
-      3 & 3982 &  270\\
-      4 &  886 & 1964\\
-      5 & 2354 & 1612\\
-      6 & 3790 & 1991\\
-      7 & 3784 & 2189\\
-      8 & 3784 & 2189
+      1 & 317 & 131 \\
+      2 & 360 & 319 \\
+      3 & 284 & 527 \\
+      4 & 248 & 595 \\
+      5 & 420 & 819 \\
+      6 & 526 & 337 \\
+      7 & 343 & 385 \\
+      8 & 449 & 143
     \end{tabular}
   } \hfill
   \subfigure[Right perspective.]{
@@ -108,17 +108,17 @@ considering each input image.
 	&\multicolumn{2}{|c||}{Image points [pix]} \\
       No & x' & y'\\
       \hline
-      1 & 748  & 484 \\
-      2 & 2136 & 297 \\
-      3 & 3883 & 512 \\
-      4 & 803  & 2167\\
-      5 & 2299 & 1782\\
-      6 & 3784 & 2189\\
-      7 & 3784 & 2189\\
-      8 & 3784 & 2189
+      1 & 343 & 113 \\
+      2 & 298 & 302 \\
+      3 & 194 & 514 \\
+      4 & 157 & 581 \\
+      5 & 365 & 873 \\
+      6 & 425 & 330 \\
+      7 & 302 & 378 \\
+      8 & 449 & 129
     \end{tabular}
-  }
-  \subfigure[Left perspective.]{\frame{\includegraphics[width=0.49\textwidth]{\generatedImgRootTarget/PointCorrespondencesL.png}}} \hfill
+  } \\
+  \subfigure[Left perspective.]{\frame{\includegraphics[height=0.49\textwidth]{\generatedImgRootTarget/PointCorrespondencesL.png}}} \hfill
   \subfigure[Right perspective.]{\frame{\includegraphics[height=0.49\textwidth]{\generatedImgRootTarget/PointCorrespondencesR.png}}}
   \caption{Point Correspondences using Homologous points.}
   \label{fig:Point Correspondences}
@@ -214,7 +214,7 @@ can be found in fig. ~\ref{fig:Point Correspondences}.
 
 Their associated epipolar lines can be found in fig. ~\ref{fig:Epipolar Lines}.
 \begin{figure}
-  \subfigure[Left perspective.]{\frame{\includegraphics[width=0.49\textwidth]{\generatedImgRootTarget/EpipolarLinesL.png}}} \hfill
+  \subfigure[Left perspective.]{\frame{\includegraphics[height=0.49\textwidth]{\generatedImgRootTarget/EpipolarLinesL.png}}} \hfill
   \subfigure[Right perspective.]{\frame{\includegraphics[height=0.49\textwidth]{\generatedImgRootTarget/EpipolarLinesR.png}}}
   \caption{Epipolar lines using given point correspondences.}
   \label{fig:Epipolar Lines}
@@ -222,7 +222,12 @@ Their associated epipolar lines can be found in fig. ~\ref{fig:Epipolar Lines}.
 \section{Evaluation:}
 As we can see in the image pair of fig. ~\ref{fig:Point Correspondences},
 the line characteristics are commented in brief in the following:
-...
+For each point, we see the epipolar lines. They seem to be very parallel.
+But in deed, they all intersect in an epipole corresponding to its picture.
+Those epipoles are situated outside of the pictures, and they are standing
+for the camera position from which the other picture had been taken.
+Hence, from the leften perspective, the epipole is on the righten side.
+From this position, the other image has been taken and vise versa.
 
 Based on the computed fundamental matrix $F$, the geometric image error
 is calculated for all points. It is also called Sampson distance
@@ -234,7 +239,8 @@ As $i$ is standing for each point, $N$ is the number of total points,
 which was in our case 8, $x$ and $x'$ are standing for the image coordinates of a certain
 point and $a$ or $b$ are standing for first or second entry of corresponding vector.
 
-The Sampson distance in our case was $d_{Sampson}=...$
+The Sampson distance in our case was $d_{Sampson}=2.0701$, which is in our opinion quite low.
+So all in all, our implementation has done a good job.
 \section{Printed Code:}
 
 %\lstset{language=<C++>}

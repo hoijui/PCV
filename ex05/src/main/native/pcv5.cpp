@@ -70,18 +70,18 @@ int main(int argc, char** argv) {
     Mat p_fst, p_snd;
 
 // comment out if you want to click
-#define PREDEFINED_POINTS 1
+//#define PREDEFINED_POINTS 1
 
 #ifdef PREDEFINED_POINTS
 	p_fst = (Mat_<float>(3, 8, CV_32FC1) <<
-        84, 61, 64, 140, 190, 139, 63, 43,
-        19, 31, 149, 136, 160, 207, 245, 201,
-        1, 1, 1, 1, 1, 1, 1, 1);
+	62, 100, 16, 93, 233, 234, 37, 139,
+	33, 32, 185, 261, 281, 148, 265, 135,
+	1, 1, 1, 1, 1, 1, 1, 1);
 
 	p_snd = (Mat_<float>(3, 8, CV_32FC1) <<
-        98, 84, 80, 156, 197, 152, 77, 45,
-        5, 19, 133, 129, 150, 193, 235, 187,
-        1, 1, 1, 1, 1, 1, 1, 1);
+	84, 122, 15, 261, 349, 276, 235, 155,
+	18, 28, 170, 241, 243, 148, 248, 125,
+	1, 1, 1, 1, 1, 1, 1, 1);
 
     namedWindow( fst.name.c_str(), 0 );
     imshow( fst.name.c_str(), fst.img );
