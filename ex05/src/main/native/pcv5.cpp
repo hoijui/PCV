@@ -291,8 +291,8 @@ void visualizeHelper(struct winInfo& win, Mat& points, Mat F) {
 	for (int i = 0; i < points.cols; ++i)
 	{
 		// l' = F * x or l = F^T * x'
-		Mat x = points.col(i);
-		Mat line = F * x;
+		const Mat& x = points.col(i);
+		const Mat line = F * x;
 		double a = line.at<float>(0, 0);
 		double b = line.at<float>(1, 0);
 		double c = line.at<float>(2, 0);
@@ -344,11 +344,16 @@ double getError(Mat& p_fst, Mat& p_snd, Mat& F) {
 		const Mat F_x = F*x;
 		const Mat F_T_x_ = F.t()*x_;
 
-		sum = sum + (pow(Mat(x_.t()*F*x).at<float>(0, 0),2)) / ( (pow((F_x.at<float>(0, 0)),2)) + (pow((F_x.at<float>(1, 0)),2)) + (pow((F_T_x_.at<float>(0, 0)),2)) + (pow((F_T_x_.at<float>(1, 0)),2)));
+		sum = sum + pow(Mat(x_.t() * F_x).at<float>(0, 0), 2) /
+				( pow(F_x.at<float>(0, 0), 2)
+					+ pow(F_x.at<float>(1, 0), 2)
+					+ pow(F_T_x_.at<float>(0, 0), 2)
+					+ pow(F_T_x_.at<float>(1, 0), 2)
+				);
 	}
 	int N=p_fst.cols;
 
-	return 1/N*sum;
+	return 1.0/N*sum;
 }
 
 /* ***********************
