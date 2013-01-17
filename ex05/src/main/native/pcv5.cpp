@@ -4,9 +4,11 @@
 // Version     : 1.0
 // Copyright   : -
 // Description : loads two images, computes relative orientation
-// Group       : Marcus Grum (), Robin Vobruba (), Jens Jawer () und Marcus Pannwitz (343479)
+// Group       : Marcus Grum (), Robin Vobruba (), Jens Jawer ()
+//				 und Marcus Pannwitz (343479)
 //============================================================================
 
+//#include "stdafx.h"
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
@@ -15,6 +17,7 @@ using namespace cv;
 
 // global variable to save point pairs
 vector<Point2f> pointList;
+float pictureScaleFactor = 1.5;
 
 // some function headers (see below)
 Mat getFundamentalMatrix(Mat& p1, Mat& p2);
@@ -39,9 +42,9 @@ struct winInfo {Mat img; string name;};
 int main(int argc, char** argv) {
 
     // check if image paths were defined
-    if (argc != 3){
-	cerr << "Usage: pcv5 <path to 1st image> <path to 2nd image>" << endl;
-	return -1;
+    if (argc != 3) {
+		cerr << "Usage: pcv5 <path to 1st image> <path to 2nd image>" << endl;
+		return -1;
     }
 
     // titles of some windows
@@ -52,9 +55,9 @@ int main(int argc, char** argv) {
     Mat fstImage = imread(argv[1]);
     Mat sndImage = imread(argv[2]);
     
-    if ( (!fstImage.data) || (!sndImage.data)){
-	cerr << "ERROR: Could not load images" << endl;
-	return -2;
+    if ( (!fstImage.data) || (!sndImage.data)) {
+		cerr << "ERROR: Could not load images" << endl;
+		return -2;
     }
 
     // fuse image data and window title
@@ -83,10 +86,16 @@ int main(int argc, char** argv) {
 	18, 28, 170, 241, 243, 148, 248, 125,
 	1, 1, 1, 1, 1, 1, 1, 1);
 
-    namedWindow( fst.name.c_str(), 0 );
-    imshow( fst.name.c_str(), fst.img );
-    namedWindow( fst.name.c_str(), 0 );
-    imshow( snd.name.c_str(), snd.img );
+	namedWindow( fst.name.c_str(), 0 );
+	imshow( fst.name.c_str(), fst.img );
+	cvResizeWindow(fst.name.c_str(), fst.img.cols / pictureScaleFactor, fst.img.rows / pictureScaleFactor);
+	cvMoveWindow(fst.name.c_str(), 0, 0);
+	
+	namedWindow( snd.name.c_str(), 0 );
+	imshow( snd.name.c_str(), snd.img );
+	cvResizeWindow(snd.name.c_str(), snd.img.cols / pictureScaleFactor, snd.img.rows / pictureScaleFactor);
+	cvMoveWindow(snd.name.c_str(), snd.img.cols / pictureScaleFactor + 40, 0);
+	setMouseCallback(snd.name.c_str(), getPoints, (void*)(&snd));
 
     int numberOfPointPairs = 8;
 #else
@@ -116,11 +125,11 @@ int main(int argc, char** argv) {
 
 // compute fundamental matrix
 /*
-fst	first set of points
-snd	second set of points
+fst		first set of points
+snd		second set of points
 return	the estimated fundamental matrix
 */
-Mat getFundamentalMatrix(Mat& fst, Mat& snd){
+Mat getFundamentalMatrix(Mat& fst, Mat& snd) {
 
 	// coordinate transformation matrices for conditioning
 	Mat tFirst = getCondition2D(fst);
@@ -148,26 +157,23 @@ Mat getFundamentalMatrix(Mat& fst, Mat& snd){
 // solve homogeneous equation system by usage of SVD
 /*
 A		the design matrix
-return		the estimated fundamental matrix
+return	the estimated fundamental matrix
 */
 Mat solve_dlt(Mat& A) {
     
 	Mat f = Mat::zeros(1, 9, CV_32FC1);
 	SVD::solveZ(A, f);
-	f = f.reshape(1, 3);
-//f = f.reshape(0, 3);
-	return f;
+	return f.reshape(1, 3);
 }
 
 // decondition a fundamental matrix that was estimated from conditioned point clouds
 /*
 T_fst	conditioning matrix of first set of points
 T_snd	conditioning matrix of second set of points
-F	conditioned fundamental matrix that has to be un-conditioned (in-place)
+F		conditioned fundamental matrix that has to be un-conditioned (in-place)
 */
-void decondition(Mat& T_fst, Mat& T_snd, Mat& F){
+void decondition(Mat& T_fst, Mat& T_snd, Mat& F) {
   
-    //F = T_fst.inv() * F * T_snd;
     F = T_snd.t() * F * T_fst;
 }
 
@@ -175,9 +181,9 @@ void decondition(Mat& T_fst, Mat& T_snd, Mat& F){
 /*
 fst		first set of points
 snd		second set of points
-return		the design matrix to be computed
+return	the design matrix to be computed
 */
-Mat getDesignMatrix_fundamental(Mat& fst, Mat& snd){
+Mat getDesignMatrix_fundamental(Mat& fst, Mat& snd) {
 
 	// The design matrix has at least 9 rows in case of 8 points. If there are more points, the number of rows equals the number of points
 	Mat design = (fst.cols < 8) ? Mat::zeros(9, 9, CV_32FC1) : Mat::zeros(fst.cols, 9, CV_32FC1);
@@ -210,16 +216,17 @@ Mat getDesignMatrix_fundamental(Mat& fst, Mat& snd){
 /*
 H		matrix representing the transformation
 p		input points
-return		transformed points
+return	transformed points
 */
 Mat transform(Mat& H, Mat& p) {
+
 	return H * p;
 }
 
 // get the conditioning matrix of given points
 /*
 p		the points as matrix
-return		the condition matrix (already allocated)
+return	the condition matrix (already allocated)
 */
 Mat getCondition2D(Mat& p) {
 
@@ -284,8 +291,9 @@ void forceSingularity(Mat& F) {
 img     target window
 points  points in other image
 F       fundamental matrix between both images
+winXPos	the horizontal position of the window
 */
-void visualizeHelper(struct winInfo& win, Mat& points, Mat F) {
+void visualizeHelper(struct winInfo& win, Mat& points, Mat F, int winXPos) {
 
 	// for each point
 	for (int i = 0; i < points.cols; ++i)
@@ -300,8 +308,11 @@ void visualizeHelper(struct winInfo& win, Mat& points, Mat F) {
 		drawEpiLine(win.img, a, b, c);
 	}
 
-	// update image in windows
-	imshow(win.name.c_str(), win.img);
+	// show the image in a window
+	namedWindow( win.name.c_str(), 0 );
+	imshow( win.name.c_str(), win.img );
+	cvResizeWindow(win.name.c_str(), win.img.cols / pictureScaleFactor, win.img.rows / pictureScaleFactor);
+	cvMoveWindow(win.name.c_str(), winXPos, 0);
 }
 
 // draws epipolar lines into images
@@ -310,28 +321,32 @@ img1	structure containing fst image
 img2	structure containing snd image
 p_fst	first point set
 p_snd	second point set
-F	fundamental matrix
+F		fundamental matrix
 */
-void visualize(struct winInfo& img1, struct winInfo& img2, Mat& p_fst, Mat& p_snd, Mat& F){
+void visualize(struct winInfo& img1, struct winInfo& img2, Mat& p_fst, Mat& p_snd, Mat& F) {
 
     // draw epipolar lines for p_fst in img2
-    visualizeHelper(img2, p_fst, F);
+    visualizeHelper(img2, p_fst, F, 0);
 
     // draw epipolar lines for p_snd in img1
-    visualizeHelper(img1, p_snd, F.t());
+    visualizeHelper(img1, p_snd, F.t(), (int)(img1.img.cols / pictureScaleFactor + 40));
 
     // save Windows for Doc
     imwrite("EpipolarLinesL.png", img1.img);
     imwrite("EpipolarLinesR.png", img2.img);
     // wait until any key was pressed
     waitKey(0);
+
+	// close windows
+	destroyWindow( img1.name.c_str() );
+	destroyWindow( img2.name.c_str() );
 }
 
 // calculate geometric error of estimated fundamental matrix
 /*
 p_fst		first set of points
 p_snd		second set of points
-F		fundamental matrix
+F			fundamental matrix
 return		geometric error
 */
 double getError(Mat& p_fst, Mat& p_snd, Mat& F) {
@@ -412,12 +427,25 @@ p_snd		points within the second image (to be defined by this method)
 int getPoints(struct winInfo& fst, struct winInfo& snd, Mat& p_fst, Mat& p_snd){
 
     // show input images and install mouse callback
-    namedWindow( fst.name.c_str(), 0 );
-    imshow( fst.name.c_str(), fst.img );
-    setMouseCallback(fst.name.c_str(), getPoints, (void*)(&fst));
-    namedWindow( snd.name.c_str(), 0 );
-    imshow( snd.name.c_str(), snd.img );
-    setMouseCallback(snd.name.c_str(), getPoints, (void*)(&snd));
+	namedWindow( fst.name.c_str(), 0 );
+	imshow( fst.name.c_str(), fst.img );
+	cvResizeWindow(fst.name.c_str(), fst.img.cols / pictureScaleFactor, fst.img.rows / pictureScaleFactor);
+	cvMoveWindow(fst.name.c_str(), 0, 0);
+	setMouseCallback(fst.name.c_str(), getPoints, (void*)(&fst));
+
+	namedWindow( snd.name.c_str(), 0 );
+	imshow( snd.name.c_str(), snd.img );
+	cvResizeWindow(snd.name.c_str(), snd.img.cols / pictureScaleFactor, snd.img.rows / pictureScaleFactor);
+	cvMoveWindow(snd.name.c_str(), snd.img.cols / pictureScaleFactor + 40, 0);
+	setMouseCallback(snd.name.c_str(), getPoints, (void*)(&snd));
+
+	
+	/*namedWindow( fst.name.c_str(), 0 );
+	imshow( fst.name.c_str(), fst.img );
+	setMouseCallback(fst.name.c_str(), getPoints, (void*)(&fst));
+	namedWindow( snd.name.c_str(), 0 );
+	imshow( snd.name.c_str(), snd.img );
+	setMouseCallback(snd.name.c_str(), getPoints, (void*)(&snd));*/
     // wait until any key was pressed
     waitKey(0);
 
