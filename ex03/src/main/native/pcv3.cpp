@@ -95,11 +95,22 @@ void interprete(Mat& P) {
 	// see pcv9_WS1213_projectionmatrix.pdf page 9
 
 	Mat M = P.colRange(0, 3);
+	float lambda = ((determinant(M) < 0) ? 1 : -1) / norm(M.col(3));
+	M *= lambda;
 	Mat upper(3, 3, P.type());
 	Mat rest(3, 3, P.type());
 	RQDecomp3x3(M, upper, rest);
 	Mat rotationMatrix = rest;
 	Mat calibrationMatrix = upper;
+	if ((upper.at<float>(0, 0) < 0)
+		|| (upper.at<float>(1, 1) < 0)
+		|| (upper.at<float>(2, 2) < 0))
+	{
+		cerr << endl
+			<< "There are negative values on the diagonal of the triangular (K(alibration)) matrix" << endl
+			<< " -> positiveness constraint is violated; exiting!" << endl;
+		exit(1);
+	}
 	cout << endl << "RQ-decomp Q or R(otation): " << endl << rest << endl;
 	cout << endl << "RQ-decomp R or K(alibration): " << endl << upper << endl;
 
@@ -109,9 +120,9 @@ void interprete(Mat& P) {
 	P134.col(1) = P.col(2);
 	P134.col(2) = P.col(3);
 	Mat P124(3, 3, P.type());
-	P134.col(0) = P.col(0);
-	P134.col(1) = P.col(1);
-	P134.col(2) = P.col(3);
+	P124.col(0) = P.col(0);
+	P124.col(1) = P.col(1);
+	P124.col(2) = P.col(3);
 	Mat P123 = P.colRange(0, 3);
 
 	Mat projectionCenter(3, 1, CV_32FC1);
@@ -337,7 +348,7 @@ Mat getCondition3D(Mat& p)
 	cond.at<float>(0, 3) = -transX / scaleX;
 	cond.at<float>(1, 1) = 1 / scaleY;
 	cond.at<float>(1, 3) = -transY / scaleY;
-	cond.at<float>(2, 2) = 1 / scaleY;
+	cond.at<float>(2, 2) = 1 / scaleZ;
 	cond.at<float>(2, 3) = -transZ / scaleZ;
 
 	return cond;
