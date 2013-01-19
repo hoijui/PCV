@@ -178,7 +178,27 @@ return	the estimated fundamental matrix
 */
 Mat getFundamentalMatrix(Mat& fst, Mat& snd) {
 
-	// TODO
+	// coordinate transformation matrices for conditioning
+	Mat tFirst = getCondition2D(fst);
+	Mat tSecond = getCondition2D(snd);
+
+	// create conditioned matrices
+	Mat cFirst = transform(tFirst, fst);
+	Mat cSecond = transform(tSecond, snd);
+
+	// create design matrix, for fundamental matrix between fst and snd
+	Mat design = getDesignMatrix_fundamental(cFirst, cSecond);
+
+	// svd and reshaping
+	Mat F = solve_dlt(design);
+
+	// enforce singularity of F: SVD, kill one rank, recompose F
+	forceSingularity(F);
+
+	// creating final fundamental matrix
+	decondition_fundamental(tFirst, tSecond, F);
+
+	return F;
 }
 
 // solve homogeneous equation system by usage of SVD
@@ -188,7 +208,10 @@ return		the estimated fundamental matrix
 */
 Mat solve_dlt(Mat& A) {
 
-	// TODO
+	const int n = A.cols;
+	Mat f = Mat::zeros(1, n*n, CV_32FC1);
+	SVD::solveZ(A, f);
+	return f.reshape(1, n);
 }
 
 // decondition a fundamental matrix that was estimated from conditioned point clouds
@@ -199,7 +222,7 @@ F	conditioned fundamental matrix that has to be un-conditioned (in-place)
 */
 void decondition_fundamental(Mat& T_fst, Mat& T_snd, Mat& F) {
 
-	// TODO
+	F = T_snd.t() * F * T_fst;
 }
 
 // define the design matrix as needed to compute fundamental matrix
@@ -210,7 +233,30 @@ return		the design matrix to be computed
 */
 Mat getDesignMatrix_fundamental(Mat& fst, Mat& snd) {
 
-	// TODO
+	// The design matrix has at least 9 rows in case of 8 points. If there are more points, the number of rows equals the number of points
+	Mat design = (fst.cols < 8) ? Mat::zeros(9, 9, CV_32FC1) : Mat::zeros(fst.cols, 9, CV_32FC1);
+
+	// Loop through all corresponding points
+	for (int i = 0; i < fst.cols; ++i) {
+		float x_fst = fst.at<float>(0, i),
+		x_snd = snd.at<float>(0, i),
+		y_fst = fst.at<float>(1, i),
+		y_snd = snd.at<float>(1, i);
+
+		design.at<float>(i, 0) = x_fst * x_snd;
+		design.at<float>(i, 1) = y_fst * x_snd;
+		design.at<float>(i, 2) = x_snd;
+
+		design.at<float>(i, 3) = x_fst * y_snd;
+		design.at<float>(i, 4) = y_fst * y_snd;
+		design.at<float>(i, 5) = y_snd;
+
+		design.at<float>(i, 6) = x_fst;
+		design.at<float>(i, 7) = y_fst;
+		design.at<float>(i, 8) = 1;
+	}
+
+	return design;
 }
 
 // define the design matrix as needed to compute fundamental matrix
@@ -232,7 +278,7 @@ return		transformed points
 */
 Mat transform(Mat& H, Mat& p) {
 
-	// TODO
+	return H * p;
 }
 
 // get the conditioning matrix of given points
@@ -242,7 +288,38 @@ return		the condition matrix (already allocated)
 */
 Mat getCondition2D(Mat& p) {
 
-	// TODO
+	// calculate center
+	float transX = 0, transY = 0;
+
+	// for each point
+	for (int i = 0; i < p.cols; ++i) {
+		transX += p.at<float>(0, i) / p.at<float>(2, i);
+		transY += p.at<float>(1, i) / p.at<float>(2, i);
+	}
+
+	transX /= p.cols;
+	transY /= p.cols;
+
+	// calculate scale
+	float scaleX = 0, scaleY = 0;
+
+	// for each point
+	for (int i = 0; i < p.cols; ++i) {
+		scaleX += abs((p.at<float>(0, i) / p.at<float>(2, i)) - transX);
+		scaleY += abs((p.at<float>(1, i) / p.at<float>(2, i)) - transY);
+	}
+
+	scaleX /= p.cols;
+	scaleY /= p.cols;
+
+	// build condition matrix
+	Mat cond = Mat::eye(3, 3, CV_32FC1);
+	cond.at<float>(0, 0) = 1 / scaleX;
+	cond.at<float>(0, 2) = -transX / scaleX;
+	cond.at<float>(1, 1) = 1 / scaleY;
+	cond.at<float>(1, 2) = -transY / scaleY;
+
+	return cond;
 }
 
 // get the conditioning matrix of given 3D points
@@ -262,7 +339,18 @@ F	the matrix to be changed
 */
 void forceSingularity(Mat& F) {
 
-	// TODO
+	Mat U(3, 3, CV_32FC1);
+	Mat d(3, 1, CV_32FC1);
+	Mat Vt(3, 3, CV_32FC1);
+
+	// decompose
+	SVD::compute(F, d, U, Vt);
+
+	// set d3 to 0  (enforce rank 2)
+	d.at<float>(2, 0) = 0;
+
+	// recombine
+	F = U * Mat::diag(d) * Vt;
 }
 
 /* ***********************
