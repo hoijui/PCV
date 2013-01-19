@@ -121,7 +121,18 @@ return		skew matrix
 */
 Mat makeSkewMatrix(Mat& e) {
 
-	// TODO
+	// # dimensions
+	const int D = e.rows; // 3
+
+	Mat skew = Mat::zeros(D, D, e.type());
+	skew.at<float>(0, 1) = -e.at<float>(0, 2);
+	skew.at<float>(1, 0) =  e.at<float>(0, 2);
+	skew.at<float>(0, 2) =  e.at<float>(0, 1);
+	skew.at<float>(2, 0) = -e.at<float>(0, 1);
+	skew.at<float>(1, 2) = -e.at<float>(0, 0);
+	skew.at<float>(2, 1) =  e.at<float>(0, 0);
+
+	return skew;
 }
 
 // generates 2 projection matrices by using fundamental matrix
@@ -132,7 +143,20 @@ P2	second projection matrix based on F
 */
 void defineCameras(Mat& F, Mat& P1, Mat& P2) {
 
-	// TODO
+	// # dimensions
+	const int D = F.rows; // 3
+
+	P1 = Mat::zeros(D, D + 1, F.type()); // 3 x 4 matrix
+	for (int di = 0; di < D; ++di) {
+		P1.at<float>(di, di) = 1.0f;
+	}
+
+	P2 = Mat::zeros(D, D + 1, F.type()); // 3 x 4 matrix
+	Mat e1;
+	Mat e2;
+	getEpipols(F, e1, e2);
+	P2.colRange(0, 3) = makeSkewMatrix(e2) * F;
+	P2.col(3) = e2;
 }
 
 // triangulates given set of image points based on projection matrices
