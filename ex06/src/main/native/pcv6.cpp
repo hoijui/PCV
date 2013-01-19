@@ -182,7 +182,34 @@ return	triangulated object points
 */
 Mat linearTriangulation(Mat& P1, Mat& P2, Mat& x1, Mat& x2) {
 
-	// TODO
+	// number of point sets
+	const int n = x1.cols;
+
+	Mat A(12, n, P1.type());
+	for (int pi = 0; pi < n; ++pi) {
+		const float x  = x1.at<float>(0, pi);
+		const float y  = x1.at<float>(1, pi);
+		const float x_ = x2.at<float>(0, pi);
+		const float y_ = x2.at<float>(1, pi);
+
+		A.at<float>(0,  pi) = x * P1.at<float>(0, 2) - P1.at<float>(0, 0);
+		A.at<float>(1,  pi) = x * P1.at<float>(1, 2) - P1.at<float>(1, 0);
+		A.at<float>(2,  pi) = x * P1.at<float>(2, 2) - P1.at<float>(2, 0);
+
+		A.at<float>(3,  pi) = y * P1.at<float>(0, 2) - P1.at<float>(0, 1);
+		A.at<float>(4,  pi) = y * P1.at<float>(1, 2) - P1.at<float>(1, 1);
+		A.at<float>(5,  pi) = y * P1.at<float>(2, 2) - P1.at<float>(2, 1);
+
+		A.at<float>(6,  pi) = x_ * P2.at<float>(0, 2) - P2.at<float>(0, 0);
+		A.at<float>(7,  pi) = x_ * P2.at<float>(1, 2) - P2.at<float>(1, 0);
+		A.at<float>(8,  pi) = x_ * P2.at<float>(2, 2) - P2.at<float>(2, 0);
+
+		A.at<float>(9,  pi) = y_ * P2.at<float>(0, 2) - P2.at<float>(0, 1);
+		A.at<float>(10, pi) = y_ * P2.at<float>(1, 2) - P2.at<float>(1, 1);
+		A.at<float>(11, pi) = y_ * P2.at<float>(2, 2) - P2.at<float>(2, 1);
+	}
+
+	return A;
 }
 
 // computes 3D homography
