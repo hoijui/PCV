@@ -111,7 +111,20 @@ e2	second epipol
 */
 void getEpipols(Mat& F, Mat& e1, Mat& e2) {
 
-	// TODO
+	// # dimensions
+	const int D = F.rows; // 3
+
+	Mat U(D, D, CV_32FC1);
+	Mat diag(D, 1, CV_32FC1);
+	Mat Vt(D, D, CV_32FC1);
+
+	// decompose
+	SVD::compute(F, diag, U, Vt);
+
+	// extract epipoles
+	// see pcv12_WS1213_relor.pdf page 8
+	e1 = Vt.col(D); // last column
+	e2 = U.col(D); // last column
 }
 
 // generates skew matrix from vector
@@ -191,7 +204,7 @@ H	conditioned homography that has to be un-conditioned (in-place)
 */
 void decondition_homography3D(Mat& T_to, Mat& T_from, Mat& H) {
 
-	// TODO
+	H = T_to.inv() * H * T_from;
 }
 
 // compute fundamental matrix
