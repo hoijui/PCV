@@ -281,6 +281,41 @@ Mat transform(Mat& H, Mat& p) {
 	return H * p;
 }
 
+static Mat getConditionXD(Mat& p) {
+
+	// # dimensions
+	const int D = p.rows;
+
+	// calculate center
+	Mat center(D, 1, p.type());
+	for (int pi = 0; pi < p.cols; ++pi) {
+		const float w = p.at<float>(D - 1, pi);
+		for (int di = 0; di < (D - 1); ++di) {
+			center.at<float>(di, 0) += p.at<float>(di, pi) / w;
+		}
+	}
+	center /= p.cols;
+
+	// calculate scale
+	Mat scale(D, 1, p.type());
+	for (int pi = 0; pi < p.cols; ++pi) {
+		const float w = p.at<float>(D - 1, pi);
+		for (int di = 0; di < (D - 1); ++di) {
+			scale.at<float>(di, 0) += abs((p.at<float>(di, pi) / w) - center.at<float>(di, 0));
+		}
+	}
+	scale /= p.cols;
+
+	// build condition matrix
+	Mat cond = Mat::eye(D, D, p.type());
+	for (int di = 0; di < (D - 1); ++di) {
+		cond.at<float>(di, di) = 1.0f / scale.at<float>(di, 0);
+		cond.at<float>(di, D - 1) = - center.at<float>(di, 0) / scale.at<float>(di, 0);
+	}
+
+	return cond;
+}
+
 // get the conditioning matrix of given points
 /*
 p		the points as matrix
@@ -288,38 +323,7 @@ return		the condition matrix (already allocated)
 */
 Mat getCondition2D(Mat& p) {
 
-	// calculate center
-	float transX = 0, transY = 0;
-
-	// for each point
-	for (int i = 0; i < p.cols; ++i) {
-		transX += p.at<float>(0, i) / p.at<float>(2, i);
-		transY += p.at<float>(1, i) / p.at<float>(2, i);
-	}
-
-	transX /= p.cols;
-	transY /= p.cols;
-
-	// calculate scale
-	float scaleX = 0, scaleY = 0;
-
-	// for each point
-	for (int i = 0; i < p.cols; ++i) {
-		scaleX += abs((p.at<float>(0, i) / p.at<float>(2, i)) - transX);
-		scaleY += abs((p.at<float>(1, i) / p.at<float>(2, i)) - transY);
-	}
-
-	scaleX /= p.cols;
-	scaleY /= p.cols;
-
-	// build condition matrix
-	Mat cond = Mat::eye(3, 3, CV_32FC1);
-	cond.at<float>(0, 0) = 1 / scaleX;
-	cond.at<float>(0, 2) = -transX / scaleX;
-	cond.at<float>(1, 1) = 1 / scaleY;
-	cond.at<float>(1, 2) = -transY / scaleY;
-
-	return cond;
+	return getConditionXD(p);
 }
 
 // get the conditioning matrix of given 3D points
@@ -329,7 +333,7 @@ T	the condition matrix (already allocated)
 */
 Mat getCondition3D(Mat& p) {
 
-	// TODO
+	return getConditionXD(p);
 }
 
 
