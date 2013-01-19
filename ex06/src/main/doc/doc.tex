@@ -1,0 +1,61 @@
+\documentclass[a4paper,headings=small]{scrartcl}
+\KOMAoptions{DIV=12}
+
+\usepackage[utf8x]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{listings}
+\usepackage{subfigure}
+
+% define style of numbering
+\numberwithin{equation}{section} % use separate numbering per section
+\numberwithin{figure}{section}   % use separate numbering per section
+
+% instead of using indents to denote a new paragraph, we add space before it
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{10pt plus 1pt minus 1pt}
+
+\title{Projective and direct Euclidean reconstruction}
+\subtitle{Photogrammetric Computer Vision - WS12/13 - Excercise 6}
+\author{\textbf{Team A}: Marcus Grum, Robin Vobruba, Marcus Pannwitz, Jens Jawer}
+\date{\today}
+
+\pdfinfo{%
+  /Title    (Photogrammetric Computer Vision - WS12/13 - Excercise 6 - Projective and direct Euclidean reconstruction)
+  /Author   (Team A: Marcus Grum, Robin Vobruba, Marcus Pannwitz, Jens Jawer)
+  /Creator  ()
+  /Producer ()
+  /Subject  ()
+  /Keywords ()
+}
+
+% Simple picture reference
+%   Usage: \image{#1}{#2}{#3}
+%     #1: file-name of the image
+%     #2: percentual width (decimal)
+%     #3: caption/description
+%
+%   Example:
+%     \image{myPicture}{0.8}{My huge house}
+%     See fig. \ref{fig:myPicture}.
+\newcommand{\image}[3]{
+	\begin{figure}[htbp]
+		\centering
+		\includegraphics[width=#2\textwidth]{#1}
+		\caption{#3}
+		\label{fig:#1}
+	\end{figure}
+}
+\newcommand{\imgRootGenerated}{../../../target}
+
+
+\begin{document}
+
+\maketitle
+
+
+
+
+\end{document}
+
