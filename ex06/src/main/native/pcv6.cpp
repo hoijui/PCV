@@ -72,19 +72,12 @@ int main(int argc, char** argv) {
 	cout << endl << "Camera 1: " << P1 << endl;
 	cout << endl << "Camera 2: " << P2 << endl;
 
-
-	cout << endl << "Control points:" << endl;
-	cout << "x1: " << x1 << endl;
-	cout << "x2: " << x2 << endl;
-	cout << "x1 rows: " << x1.rows << endl;
-	cout << "x1 cols: " << x1.cols << endl;
-
 	// linear triangulation of image points
 	// resulting projective reconstruction
-	Mat X_O = linearTriangulation(P1, P2, x1, x2);
+	Mat X = linearTriangulation(P1, P2, x1, x2);
 
 	// save reconstructed points to file
-	savePointList("projectiveReconstruction.asc", X_O);
+	savePointList("projectiveReconstruction.asc", X);
 
 	// read control points
 	// clean re-use of x1- and x2-matrices
@@ -102,7 +95,7 @@ int main(int argc, char** argv) {
 
 	// Transform projective reconstructed points to euclidian reconstruction
 	Mat H = homography3D(Xp, Xm);
-	Mat X_final = transform(H, X_O);
+	Mat X_final = transform(H, X);
 
 	// save reconstructed points to file
 	savePointList("euclidianReconstruction.asc", X_final);
@@ -194,57 +187,39 @@ Mat linearTriangulation(Mat& P1, Mat& P2, Mat& x1, Mat& x2) {
 
 	Mat A(4*n, 4, P1.type());
 	for (int pi = 0; pi < n; ++pi) {
-cout << "Number of pi: " << pi << endl;
 		const float x  = x1.at<float>(0, pi);
 		const float y  = x1.at<float>(1, pi);
 		const float x_ = x2.at<float>(0, pi);
 		const float y_ = x2.at<float>(1, pi);
 
-//x*(p3-p1)
-A.at<float>(pi*4  , 0) = x * P1.at<float>(2, 0) - P1.at<float>(0, 0);
-A.at<float>(pi*4  , 1) = x * P1.at<float>(2, 1) - P1.at<float>(0, 1);
-A.at<float>(pi*4  , 2) = x * P1.at<float>(2, 2) - P1.at<float>(0, 2);
-A.at<float>(pi*4  , 3) = x * P1.at<float>(2, 3) - P1.at<float>(0, 3);
+		// x * (p3 - p1)
+		A.at<float>(pi*4  , 0) = x * P1.at<float>(2, 0) - P1.at<float>(0, 0);
+		A.at<float>(pi*4  , 1) = x * P1.at<float>(2, 1) - P1.at<float>(0, 1);
+		A.at<float>(pi*4  , 2) = x * P1.at<float>(2, 2) - P1.at<float>(0, 2);
+		A.at<float>(pi*4  , 3) = x * P1.at<float>(2, 3) - P1.at<float>(0, 3);
 
-//y*(p3-p2)
-A.at<float>(pi*4+1, 0) = y * P1.at<float>(2, 0) - P1.at<float>(1, 0);
-A.at<float>(pi*4+1, 1) = y * P1.at<float>(2, 1) - P1.at<float>(1, 1);
-A.at<float>(pi*4+1, 2) = y * P1.at<float>(2, 2) - P1.at<float>(1, 2);
-A.at<float>(pi*4+1, 3) = y * P1.at<float>(2, 3) - P1.at<float>(1, 3);
+		// y * (p3 - p2)
+		A.at<float>(pi*4+1, 0) = y * P1.at<float>(2, 0) - P1.at<float>(1, 0);
+		A.at<float>(pi*4+1, 1) = y * P1.at<float>(2, 1) - P1.at<float>(1, 1);
+		A.at<float>(pi*4+1, 2) = y * P1.at<float>(2, 2) - P1.at<float>(1, 2);
+		A.at<float>(pi*4+1, 3) = y * P1.at<float>(2, 3) - P1.at<float>(1, 3);
 
-//x_*(p_3-p_1)
-A.at<float>(pi*4+2, 0) = x_ * P2.at<float>(2, 0) - P2.at<float>(0, 0);
-A.at<float>(pi*4+2, 1) = x_ * P2.at<float>(2, 1) - P2.at<float>(0, 1);
-A.at<float>(pi*4+2, 2) = x_ * P2.at<float>(2, 2) - P2.at<float>(0, 2);
-A.at<float>(pi*4+2, 3) = x_ * P2.at<float>(2, 3) - P2.at<float>(0, 3);
+		// x_ * (p_3 - p_1)
+		A.at<float>(pi*4+2, 0) = x_ * P2.at<float>(2, 0) - P2.at<float>(0, 0);
+		A.at<float>(pi*4+2, 1) = x_ * P2.at<float>(2, 1) - P2.at<float>(0, 1);
+		A.at<float>(pi*4+2, 2) = x_ * P2.at<float>(2, 2) - P2.at<float>(0, 2);
+		A.at<float>(pi*4+2, 3) = x_ * P2.at<float>(2, 3) - P2.at<float>(0, 3);
 
-//y_*(p_3-p_2)
-A.at<float>(pi*4+3, 0) = y_ * P2.at<float>(2, 0) - P2.at<float>(1, 0);
-A.at<float>(pi*4+3, 1) = y_ * P2.at<float>(2, 1) - P2.at<float>(1, 1);
-A.at<float>(pi*4+3, 2) = y_ * P2.at<float>(2, 2) - P2.at<float>(1, 2);
-A.at<float>(pi*4+3, 3) = y_ * P2.at<float>(2, 3) - P2.at<float>(1, 3); 
-
-//		A.at<float>(0,  pi) = x * P1.at<float>(0, 2) - P1.at<float>(0, 0);
-//		A.at<float>(1,  pi) = x * P1.at<float>(1, 2) - P1.at<float>(1, 0);
-//		A.at<float>(2,  pi) = x * P1.at<float>(2, 2) - P1.at<float>(2, 0);
-//
-//		A.at<float>(3,  pi) = y * P1.at<float>(0, 2) - P1.at<float>(0, 1);
-//		A.at<float>(4,  pi) = y * P1.at<float>(1, 2) - P1.at<float>(1, 1);
-//		A.at<float>(5,  pi) = y * P1.at<float>(2, 2) - P1.at<float>(2, 1);
-//
-//		A.at<float>(6,  pi) = x_ * P2.at<float>(0, 2) - P2.at<float>(0, 0);
-//		A.at<float>(7,  pi) = x_ * P2.at<float>(1, 2) - P2.at<float>(1, 0);
-//		A.at<float>(8,  pi) = x_ * P2.at<float>(2, 2) - P2.at<float>(2, 0);
-//
-//		A.at<float>(9,  pi) = y_ * P2.at<float>(0, 2) - P2.at<float>(0, 1);
-//		A.at<float>(10, pi) = y_ * P2.at<float>(1, 2) - P2.at<float>(1, 1);
-//		A.at<float>(11, pi) = y_ * P2.at<float>(2, 2) - P2.at<float>(2, 1);
+		// y_ * (p_3 - p_2)
+		A.at<float>(pi*4+3, 0) = y_ * P2.at<float>(2, 0) - P2.at<float>(1, 0);
+		A.at<float>(pi*4+3, 1) = y_ * P2.at<float>(2, 1) - P2.at<float>(1, 1);
+		A.at<float>(pi*4+3, 2) = y_ * P2.at<float>(2, 2) - P2.at<float>(1, 2);
+		A.at<float>(pi*4+3, 3) = y_ * P2.at<float>(2, 3) - P2.at<float>(1, 3);
 	}
-cout << endl << "A:" << A << endl;
-        Mat X_O = Mat::zeros(4*n, 1, CV_32FC1);
+	Mat X_O = Mat::zeros(4*n, 1, CV_32FC1);
 	SVD::solveZ(A, X_O);
 	X_O = X_O.reshape(0, 4);
-cout << endl << "X_O:" << X_O << endl;
+
 	return X_O;
 }
 
@@ -258,10 +233,7 @@ Mat homography3D(Mat& X1, Mat& X2) {
 
 	Mat& base = X1;
 	Mat& attach = X2;
-cout << "X1: " << X1 << endl;
-cout << "base: " << base << endl;
-cout << "X2: " << X2 << endl;
-cout << "attach: " << attach << endl;
+
 	// coordinate transformation matrices for conditioning
 	Mat tBase = getCondition3D(base);
 	Mat tAttach = getCondition3D(attach);
@@ -300,30 +272,27 @@ snd	second set of points
 return	the estimated fundamental matrix
 */
 Mat getFundamentalMatrix(Mat& fst, Mat& snd) {
-//cout << endl << "fst: " << fst << endl;
-//cout << endl << "snd: " << snd << endl;
+
 	// coordinate transformation matrices for conditioning
 	Mat tFirst = getCondition2D(fst);
 	Mat tSecond = getCondition2D(snd);
-//cout << endl << "tFirst: " << tFirst << endl;
-//cout << endl << "tSecond: " << tSecond << endl;
+
 	// create conditioned matrices
 	Mat cFirst = transform(tFirst, fst);
 	Mat cSecond = transform(tSecond, snd);
-//cout << endl << "cFirst: " << cFirst << endl;
-//cout << endl << "cSecond: " << cSecond << endl;
+
 	// create design matrix, for fundamental matrix between fst and snd
 	Mat design = getDesignMatrix_fundamental(cFirst, cSecond);
-//cout << endl << "design: " << design << endl;
+
 	// svd and reshaping
 	Mat F = solve_dlt(design);
-//cout << endl << "F solved: " << F << endl;
+
 	// enforce singularity of F: SVD, kill one rank, recompose F
 	forceSingularity(F);
-//cout << endl << "F singular: " << F << endl;
+
 	// creating final fundamental matrix
 	decondition_fundamental(tFirst, tSecond, F);
-//cout << endl << "F deconditioned: " << F << endl;
+
 	return F;
 }
 
@@ -403,7 +372,7 @@ Mat getDesignMatrix_homography3D(Mat& fst, Mat& snd) {
 		const int r1 = i * 2;
 		const int r2 = r1 + 1;
 
-		// zweimal: -w' * x
+		// two times: -w' * x
 		designMat.at<float>(r2, 0 + 4) = designMat.at<float>(r1, 0) = -base.at<float>(3, i) * attach.at<float>(0, i);  // -w' * x
 		designMat.at<float>(r2, 1 + 4) = designMat.at<float>(r1, 1) = -base.at<float>(3, i) * attach.at<float>(1, i);  // -w' * y
 		designMat.at<float>(r2, 2 + 4) = designMat.at<float>(r1, 2) = -base.at<float>(3, i) * attach.at<float>(2, i);  // -w' * z
@@ -458,14 +427,10 @@ static Mat getConditionXD(Mat& p) {
 		const float w = p.at<float>(D - 1, pi);
 		for (int di = 0; di < (D - 1); ++di) {
 			scale.at<float>(di, 0) += abs((p.at<float>(di, pi) / w) - center.at<float>(di, 0));
-			//Mat pointI = p.at<float>(di, pi) / w;
-			//pointI.at<float>(di, pi)
-			//scale.at<float>(di, 0) += abs((p.at<float>(di, pi) / w) - center.at<float>(di, 0));
 		}
 	}
 	scale /= p.cols;
 	scale.at<float>(D - 1, 0) += 1;
-cout << "scale: " << scale << endl;
 
 	// build condition matrix
 	Mat cond = Mat::eye(D, D, p.type());
@@ -473,8 +438,7 @@ cout << "scale: " << scale << endl;
 		cond.at<float>(di, di) = 1.0f / scale.at<float>(di, 0);
 		cond.at<float>(di, D - 1) = - center.at<float>(di, 0) / scale.at<float>(di, 0);
 	}
-cout << "p: " << p << endl;
-cout << "cond: " << cond << endl;
+
 	return cond;
 }
 
