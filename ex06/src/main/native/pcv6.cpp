@@ -183,44 +183,39 @@ return	triangulated object points
 Mat linearTriangulation(Mat& P1, Mat& P2, Mat& x1, Mat& x2) {
 
 	// number of point sets
+	const int d = x1.rows;
 	const int n = x1.cols;
 
-	Mat A(4*n, 4, P1.type());
+	Mat X_Os(d, n, P1.type());
+
+	// see pcv13_WS1213_triangulation.pdf page 10
+	Mat A(d, d, P1.type());
 	for (int pi = 0; pi < n; ++pi) {
 		const float x  = x1.at<float>(0, pi);
 		const float y  = x1.at<float>(1, pi);
 		const float x_ = x2.at<float>(0, pi);
 		const float y_ = x2.at<float>(1, pi);
 
-		// x * (p3 - p1)
-		A.at<float>(pi*4  , 0) = x * P1.at<float>(2, 0) - P1.at<float>(0, 0);
-		A.at<float>(pi*4  , 1) = x * P1.at<float>(2, 1) - P1.at<float>(0, 1);
-		A.at<float>(pi*4  , 2) = x * P1.at<float>(2, 2) - P1.at<float>(0, 2);
-		A.at<float>(pi*4  , 3) = x * P1.at<float>(2, 3) - P1.at<float>(0, 3);
+		for (int di = 0; di < d; ++di) {
+			// x * (p3 - p1)
+			A.at<float>(0, di) = (x  * P1.at<float>(2, di)) - P1.at<float>(0, di);
 
-		// y * (p3 - p2)
-		A.at<float>(pi*4+1, 0) = y * P1.at<float>(2, 0) - P1.at<float>(1, 0);
-		A.at<float>(pi*4+1, 1) = y * P1.at<float>(2, 1) - P1.at<float>(1, 1);
-		A.at<float>(pi*4+1, 2) = y * P1.at<float>(2, 2) - P1.at<float>(1, 2);
-		A.at<float>(pi*4+1, 3) = y * P1.at<float>(2, 3) - P1.at<float>(1, 3);
+			// y * (p3 - p2)
+			A.at<float>(1, di) = (y  * P1.at<float>(2, di)) - P1.at<float>(1, di);
 
-		// x_ * (p_3 - p_1)
-		A.at<float>(pi*4+2, 0) = x_ * P2.at<float>(2, 0) - P2.at<float>(0, 0);
-		A.at<float>(pi*4+2, 1) = x_ * P2.at<float>(2, 1) - P2.at<float>(0, 1);
-		A.at<float>(pi*4+2, 2) = x_ * P2.at<float>(2, 2) - P2.at<float>(0, 2);
-		A.at<float>(pi*4+2, 3) = x_ * P2.at<float>(2, 3) - P2.at<float>(0, 3);
+			// x_ * (p_3 - p_1)
+			A.at<float>(2, di) = (x_ * P2.at<float>(2, di)) - P2.at<float>(0, di);
 
-		// y_ * (p_3 - p_2)
-		A.at<float>(pi*4+3, 0) = y_ * P2.at<float>(2, 0) - P2.at<float>(1, 0);
-		A.at<float>(pi*4+3, 1) = y_ * P2.at<float>(2, 1) - P2.at<float>(1, 1);
-		A.at<float>(pi*4+3, 2) = y_ * P2.at<float>(2, 2) - P2.at<float>(1, 2);
-		A.at<float>(pi*4+3, 3) = y_ * P2.at<float>(2, 3) - P2.at<float>(1, 3);
+			// y_ * (p_3 - p_2)
+			A.at<float>(3, di) = (y_ * P2.at<float>(2, di)) - P2.at<float>(1, di);
+		}
+
+		Mat X_O; // will be a (4 x 1) vector
+		SVD::solveZ(A, X_O);
+		X_Os.col(pi) = X_O;
 	}
-	Mat X_O = Mat::zeros(4*n, 1, CV_32FC1);
-	SVD::solveZ(A, X_O);
-	X_O = X_O.reshape(0, 4);
 
-	return X_O;
+	return X_Os;
 }
 
 // computes 3D homography
