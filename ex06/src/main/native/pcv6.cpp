@@ -292,10 +292,10 @@ return		the estimated fundamental matrix
 */
 Mat solve_dlt(Mat& A) {
 
-	const int n = A.cols;
+	const int n = sqrt(A.cols);
 	Mat f = Mat::zeros(1, n*n, CV_32FC1);
 	SVD::solveZ(A, f);
-	return f.reshape(1, n);
+	return f.reshape(0, n);
 }
 
 // decondition a fundamental matrix that was estimated from conditioned point clouds
