@@ -220,7 +220,27 @@ H	computed homography
 */
 Mat homography3D(Mat& X1, Mat& X2) {
 
-	// TODO
+	Mat& base = X1;
+	Mat& attach = X2;
+
+	// coordinate transformation matrices for conditioning
+	Mat tBase = getCondition3D(base);
+	Mat tAttach = getCondition3D(attach);
+
+	// create condition matrices
+	Mat cBase = transform(tBase, base);
+	Mat cAttach = transform(tAttach, attach);
+
+	// create design matrix, for projection attach -> base
+	Mat design = getDesignMatrix_homography3D(cBase, cAttach);
+
+	// SVD and reshaping
+	Mat H = solve_dlt(design);
+
+	// creating final homography
+	decondition_homography3D(tBase, tAttach, H);
+
+	return H;
 }
 
 // decondition a homography that was estimated from conditioned point clouds
@@ -331,7 +351,36 @@ A	the design matrix to be computed
 */
 Mat getDesignMatrix_homography3D(Mat& fst, Mat& snd) {
 
-	// TODO
+	const Mat& base = fst;
+	const Mat& attach = snd;
+
+	// design matrix: at least (12 x 12), if more points selected, then (2*#points x 12)
+	Mat designMat = Mat::zeros(base.cols == 4 ? 12 : base.cols * 2, 12, CV_32FC1);
+
+	for (int i = 0; i < base.cols; ++i) {
+		const int r1 = i * 2;
+		const int r2 = r1 + 1;
+
+		// zweimal: -w' * x
+		designMat.at<float>(r2, 0 + 4) = designMat.at<float>(r1, 0) = -base.at<float>(3, i) * attach.at<float>(0, i);  // -w' * x
+		designMat.at<float>(r2, 1 + 4) = designMat.at<float>(r1, 1) = -base.at<float>(3, i) * attach.at<float>(1, i);  // -w' * y
+		designMat.at<float>(r2, 2 + 4) = designMat.at<float>(r1, 2) = -base.at<float>(3, i) * attach.at<float>(2, i);  // -w' * z
+		designMat.at<float>(r2, 3 + 4) = designMat.at<float>(r1, 3) = -base.at<float>(3, i) * attach.at<float>(3, i);  // -w' * w
+
+		// u' * x
+		designMat.at<float>(r1, 8)  = base.at<float>(0, i) * attach.at<float>(0, i);
+		designMat.at<float>(r1, 9)  = base.at<float>(0, i) * attach.at<float>(1, i);
+		designMat.at<float>(r1, 10) = base.at<float>(0, i) * attach.at<float>(2, i);
+		designMat.at<float>(r1, 11) = base.at<float>(0, i) * attach.at<float>(3, i);
+
+		// v' * x
+		designMat.at<float>(r2, 8)  = base.at<float>(1, i) * attach.at<float>(0, i);
+		designMat.at<float>(r2, 9)  = base.at<float>(1, i) * attach.at<float>(1, i);
+		designMat.at<float>(r2, 10) = base.at<float>(1, i) * attach.at<float>(2, i);
+		designMat.at<float>(r2, 11) = base.at<float>(1, i) * attach.at<float>(3, i);
+	}
+
+	return designMat;
 }
 
 // apply transformation to set of points
