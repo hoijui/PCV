@@ -183,24 +183,25 @@ return	triangulated object points
 Mat linearTriangulation(Mat& P1, Mat& P2, Mat& x1, Mat& x2) {
 
 	// number of point sets
-	const int d = x1.rows;
 	const int n = x1.cols;
 
-	Mat X_Os(d, n, P1.type());
+	const int D = P1.cols;
+
+	Mat X_Os(D, n, P1.type());
 
 	// see pcv13_WS1213_triangulation.pdf page 10
-	Mat A(d, d, P1.type());
+	Mat A(D, D, P1.type());
 	for (int pi = 0; pi < n; ++pi) {
 		const float x  = x1.at<float>(0, pi);
 		const float y  = x1.at<float>(1, pi);
 		const float x_ = x2.at<float>(0, pi);
 		const float y_ = x2.at<float>(1, pi);
 
-		for (int di = 0; di < d; ++di) {
-			// x * (p3 - p1)
+		for (int di = 0; di < D; ++di) {
+			// x *  (p3 - p1)
 			A.at<float>(0, di) = (x  * P1.at<float>(2, di)) - P1.at<float>(0, di);
 
-			// y * (p3 - p2)
+			// y *  (p3 - p2)
 			A.at<float>(1, di) = (y  * P1.at<float>(2, di)) - P1.at<float>(1, di);
 
 			// x_ * (p_3 - p_1)
