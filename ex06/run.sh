@@ -23,6 +23,11 @@ if [ "${1}" = "debug" ]; then
 	echo "ARGUMENTS: ${ARGUMENTS}"
 	ddd "${EXECUTABLE}" &
 else
-	"${EXECUTABLE}" ${ARGUMENTS}
+	if [ "${1}" = "valgrind" ]; then
+		echo "ARGUMENTS: ${ARGUMENTS}"
+		valgrind "${EXECUTABLE}"  ${ARGUMENTS}
+	else
+		"${EXECUTABLE}" ${ARGUMENTS}
+	fi
 fi
 
