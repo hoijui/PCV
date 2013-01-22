@@ -211,7 +211,7 @@ Mat linearTriangulation(Mat& P1, Mat& P2, Mat& x1, Mat& x2) {
 			A.at<float>(3, di) = (y_ * P2.at<float>(2, di)) - P2.at<float>(1, di);
 		}
 
-		Mat X_O; // will be a (4 x 1) vector
+		Mat X_O; // will be a (D x 1) vector
 		SVD::solveZ(A, X_O);
 		X_Os.col(pi) = X_O;
 	}
@@ -410,14 +410,11 @@ static Mat getConditionXD(Mat& p) {
 	Mat center = Mat::zeros(D, 1, p.type());
 	for (int pi = 0; pi < p.cols; ++pi) {
 		const float w = p.at<float>(D - 1, pi);
-		for (int di = 0; di < (D); ++di) {
+		for (int di = 0; di < (D - 1); ++di) {
 			center.at<float>(di, 0) += p.at<float>(di, pi) / w;
 		}
 	}
 	center /= p.cols;
-	center.at<float>(D - 1, 0) *= p.cols;
-	// normalize
-	center /= center.at<float>(D - 1, 0);
 
 	// calculate scale
 	Mat scale = Mat::zeros(D, 1, p.type());
@@ -428,7 +425,6 @@ static Mat getConditionXD(Mat& p) {
 		}
 	}
 	scale /= p.cols;
-	scale.at<float>(D - 1, 0) += 1;
 
 	// build condition matrix
 	Mat cond = Mat::eye(D, D, p.type());
