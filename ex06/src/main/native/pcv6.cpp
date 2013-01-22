@@ -415,7 +415,9 @@ static Mat getConditionXD(Mat& p) {
 		}
 	}
 	center /= p.cols;
-	center = center / center.at<float>(D - 1, 0);
+	center.at<float>(D - 1, 0) *= p.cols;
+	// normalize
+	center /= center.at<float>(D - 1, 0);
 
 	// calculate scale
 	Mat scale = Mat::zeros(D, 1, p.type());
