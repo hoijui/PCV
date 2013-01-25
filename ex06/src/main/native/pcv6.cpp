@@ -39,6 +39,7 @@ Mat makeSkewMatrix(Mat& e);
 int readMatchingPoints(string fname, Mat& x1, Mat& x2);
 int readControlPoints(string fname, Mat& x1, Mat& x2, Mat& Xm);
 void savePointList(string fname, Mat& points);
+void setSmallValuesToZero(Mat& mat);
 
 // structure to fuse image data and window title
 struct winInfo {Mat img; string name;};
@@ -477,6 +478,18 @@ void forceSingularity(Mat& F) {
 	F = U * Mat::diag(d) * Vt;
 }
 
+void setSmallValuesToZero(Mat& mat) {
+
+	for (int ri = 0; ri < mat.rows; ++ri) {
+		for (int ci = 0; ci < mat.cols; ++ci) {
+			if (abs(mat.at<float>(ri, ci)) < 1.0e-5) {
+				mat.at<float>(ri, ci) = 0.0f;
+			}
+		}
+	}
+
+}
+
 /* ***********************
    *** Given Functions ***
    *********************** */
@@ -495,23 +508,22 @@ void savePointList(string fname, Mat& points) {
 		return;
 	}
 
-	// if homogeneous points: norm and write points
+	// if homogeneous points: normalize
 	if (points.rows == 4) {
 		for (int i=0; i < points.cols; i++) {
-			file
-					<< points.at<float>(0, i) / points.at<float>(3, i) << ","
-					<< points.at<float>(1, i) / points.at<float>(3, i) << ","
-					<< points.at<float>(2, i) / points.at<float>(3, i) << endl;
+			points.at<float>(0, i) /= points.at<float>(3, i);
+			points.at<float>(1, i) /= points.at<float>(3, i);
+			points.at<float>(2, i) /= points.at<float>(3, i);
+			points.at<float>(3, i) /= points.at<float>(3, i);
 		}
 	}
-	// if euclidian points: write points
-	if (points.rows == 3) {
-		for (int i=0; i < points.cols; i++) {
-			file
-					<< points.at<float>(0, i) << ","
-					<< points.at<float>(1, i) << ","
-					<< points.at<float>(2, i) << endl;
-		}
+	setSmallValuesToZero(points);
+	// write euclidian points
+	for (int i=0; i < points.cols; i++) {
+		file
+				<< points.at<float>(0, i) << ","
+				<< points.at<float>(1, i) << ","
+				<< points.at<float>(2, i) << endl;
 	}
 
 	// close file
