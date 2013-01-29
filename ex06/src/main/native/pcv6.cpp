@@ -78,6 +78,9 @@ int main(int argc, char** argv) {
 	// linear triangulation of image points
 	// resulting projective reconstruction
 	Mat X = linearTriangulation(P1, P2, x1, x2);
+	for (int di = 0; di < X.cols; ++di) {
+		cout << endl << "X(" << di << ")=" << X.col(di) << endl;
+	}
 
 	// save reconstructed points to file
 	savePointList("projectiveReconstruction.asc", X);
@@ -144,10 +147,10 @@ Mat makeSkewMatrix(Mat& e) {
 	const int D = e.rows; // 3
 
 	Mat skew = Mat::zeros(D, D, e.type());
-	skew.at<float>(0, 1) = -e.at<float>(0, 2);
-	skew.at<float>(1, 0) =  e.at<float>(0, 2);
-	skew.at<float>(0, 2) =  e.at<float>(0, 1);
-	skew.at<float>(2, 0) = -e.at<float>(0, 1);
+	skew.at<float>(0, 1) = -e.at<float>(2, 0);
+	skew.at<float>(1, 0) =  e.at<float>(2, 0);
+	skew.at<float>(0, 2) =  e.at<float>(1, 0);
+	skew.at<float>(2, 0) = -e.at<float>(1, 0);
 	skew.at<float>(1, 2) = -e.at<float>(0, 0);
 	skew.at<float>(2, 1) =  e.at<float>(0, 0);
 
@@ -265,6 +268,7 @@ H	conditioned homography that has to be un-conditioned (in-place)
 void decondition_homography3D(Mat& T_to, Mat& T_from, Mat& H) {
 
 	H = T_to.inv() * H * T_from;
+	//H = T_to.inv() * H * T_from; ...stuertzt ab...? ToDo
 }
 
 // compute fundamental matrix
