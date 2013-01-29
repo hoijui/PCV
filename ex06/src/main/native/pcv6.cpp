@@ -40,6 +40,8 @@ int readMatchingPoints(string fname, Mat& x1, Mat& x2);
 int readControlPoints(string fname, Mat& x1, Mat& x2, Mat& Xm);
 void savePointList(string fname, Mat& points);
 void setSmallValuesToZero(Mat& mat);
+float sumMembers(const Mat& mat);
+float absDifferenceSum(const Mat& mat1, const Mat& mat2);
 
 // structure to fuse image data and window title
 struct winInfo {Mat img; string name;};
@@ -93,6 +95,9 @@ int main(int argc, char** argv) {
 	// linear triangulation of image points
 	Mat Xp = linearTriangulation(P1, P2, x1, x2);
 	cout << "Reconstructed control points: " << Xp << endl;
+	cout << endl << endl;
+	float reconstructionErrorSum = absDifferenceSum(Xp, Xm);
+	cout << "Reconstruction error: " << reconstructionErrorSum << endl;
 
 	// Transform projective reconstructed points to euclidian reconstruction
 	Mat H = homography3D(Xp, Xm);
@@ -487,7 +492,19 @@ void setSmallValuesToZero(Mat& mat) {
 			}
 		}
 	}
+}
 
+float sumMembers(const Mat& mat) {
+
+	return Mat(
+			Mat::ones(1, mat.rows, mat.type())
+			* mat
+			* Mat::ones(mat.cols, 1, mat.type())
+			).at<float>(0, 0);
+}
+
+float absDifferenceSum(const Mat& mat1, const Mat& mat2) {
+	return sumMembers(abs(mat1 - mat2));
 }
 
 /* ***********************
