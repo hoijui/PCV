@@ -78,6 +78,9 @@ int main(int argc, char** argv) {
 	// linear triangulation of image points
 	// resulting projective reconstruction
 	Mat X = linearTriangulation(P1, P2, x1, x2);
+	for (int di = 0; di < X.cols; ++di) {
+		cout << endl << "X(" << di << ")=" << X.col(di) << endl;
+	}
 
 	// save reconstructed points to file
 	savePointList("projectiveReconstruction.asc", X);
@@ -267,6 +270,7 @@ H	conditioned homography that has to be un-conditioned (in-place)
 void decondition_homography3D(Mat& T_to, Mat& T_from, Mat& H) {
 
 	H = T_from.t() * H * T_to;
+
 }
 
 // compute fundamental matrix
