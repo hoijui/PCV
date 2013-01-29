@@ -144,10 +144,10 @@ Mat makeSkewMatrix(Mat& e) {
 	const int D = e.rows; // 3
 
 	Mat skew = Mat::zeros(D, D, e.type());
-	skew.at<float>(0, 1) = -e.at<float>(0, 2);
-	skew.at<float>(1, 0) =  e.at<float>(0, 2);
-	skew.at<float>(0, 2) =  e.at<float>(0, 1);
-	skew.at<float>(2, 0) = -e.at<float>(0, 1);
+	skew.at<float>(0, 1) = -e.at<float>(2, 0);
+	skew.at<float>(1, 0) =  e.at<float>(2, 0);
+	skew.at<float>(0, 2) =  e.at<float>(1, 0);
+	skew.at<float>(2, 0) = -e.at<float>(1, 0);
 	skew.at<float>(1, 2) = -e.at<float>(0, 0);
 	skew.at<float>(2, 1) =  e.at<float>(0, 0);
 
@@ -165,17 +165,17 @@ void defineCameras(Mat& F, Mat& P1, Mat& P2) {
 	// # dimensions
 	const int D = F.rows; // 3
 
-	P1 = Mat::zeros(D, D + 1, F.type()); // 3 x 4 matrix
-	for (int di = 0; di < D; ++di) {
-		P1.at<float>(di, di) = 1.0f;
-	}
+    P1 = Mat::eye(D, D + 1, F.type());
 
 	P2 = Mat::zeros(D, D + 1, F.type()); // 3 x 4 matrix
 	Mat e1;
 	Mat e2;
 	getEpipols(F, e1, e2);
 	P2.colRange(0, 3) = makeSkewMatrix(e2) * F;
-	P2.col(3) = e2;
+	// P2.col(3) = e2;
+    for(int i = 0; i < e2.rows; ++i)
+        P2.at<float>(i, 3) = e2.at<float>(i, 0);
+
 }
 
 // triangulates given set of image points based on projection matrices
@@ -217,9 +217,11 @@ Mat linearTriangulation(Mat& P1, Mat& P2, Mat& x1, Mat& x2) {
 			A.at<float>(3, di) = (y_ * P2.at<float>(2, di)) - P2.at<float>(1, di);
 		}
 
-		Mat X_O; // will be a (D x 1) vector
+		Mat X_O = Mat::zeros(D, 1, P1.type());
 		SVD::solveZ(A, X_O);
-		X_Os.col(pi) = X_O;
+		// X_Os.col(pi) = X_O;
+        for(int i = 0; i < X_O.rows; ++i)
+            X_Os.at<float>(i, pi) = X_O.at<float>(i, 0);
 	}
 
 	return X_Os;
@@ -264,7 +266,7 @@ H	conditioned homography that has to be un-conditioned (in-place)
 */
 void decondition_homography3D(Mat& T_to, Mat& T_from, Mat& H) {
 
-	H = T_to.inv() * H * T_from;
+	H = T_from.t() * H * T_to;
 }
 
 // compute fundamental matrix
@@ -305,7 +307,7 @@ return		the estimated fundamental matrix
 */
 Mat solve_dlt(Mat& A) {
 
-	const int n = sqrt(A.cols);
+	const int n = sqrt((float)A.cols);
 	Mat f = Mat::zeros(1, n*n, CV_32FC1);
 	SVD::solveZ(A, f);
 	return f.reshape(0, n);
@@ -353,6 +355,10 @@ Mat getDesignMatrix_fundamental(Mat& fst, Mat& snd) {
 		design.at<float>(i, 8) = 1;
 	}
 
+    // "Speed up for large rectangular matrices (i.e. m > 2n) by using A^T*A instead of A"; see pcv5_WS1213_DLT.pdf, page 25
+    if(design.rows > 2 * design.cols);
+        design = design.t() * design;
+
 	return design;
 }
 
@@ -367,30 +373,39 @@ Mat getDesignMatrix_homography3D(Mat& fst, Mat& snd) {
 	const Mat& base = fst;
 	const Mat& attach = snd;
 
-	// design matrix: at least (12 x 12), if more points selected, then (2*#points x 12)
-	Mat designMat = Mat::zeros(base.cols == 4 ? 12 : base.cols * 2, 12, CV_32FC1);
+	// design matrix: at least 5 points required ->
+    // size at least (16 x 16), if more points selected, then (3*#points x 16)
+    // see pcv7_WS1213_3Dhomo.pdf, page 14
+	Mat designMat = Mat::zeros(base.cols <= 5 ? 16 : base.cols * 3, 16, CV_32FC1);
 
 	for (int i = 0; i < base.cols; ++i) {
 		const int r1 = i * 2;
 		const int r2 = r1 + 1;
+        const int r3 = r1 + 2;
 
-		// two times: -w' * x
-		designMat.at<float>(r2, 0 + 4) = designMat.at<float>(r1, 0) = -base.at<float>(3, i) * attach.at<float>(0, i);  // -w' * x
-		designMat.at<float>(r2, 1 + 4) = designMat.at<float>(r1, 1) = -base.at<float>(3, i) * attach.at<float>(1, i);  // -w' * y
-		designMat.at<float>(r2, 2 + 4) = designMat.at<float>(r1, 2) = -base.at<float>(3, i) * attach.at<float>(2, i);  // -w' * z
-		designMat.at<float>(r2, 3 + 4) = designMat.at<float>(r1, 3) = -base.at<float>(3, i) * attach.at<float>(3, i);  // -w' * w
+		// two times: -t' * x
+		designMat.at<float>(r3, 0 + 8) = designMat.at<float>(r2, 0 + 4) = designMat.at<float>(r1, 0) = -base.at<float>(3, i) * attach.at<float>(0, i);  // -t' * x
+		designMat.at<float>(r3, 1 + 8) = designMat.at<float>(r2, 1 + 4) = designMat.at<float>(r1, 1) = -base.at<float>(3, i) * attach.at<float>(1, i);  // -t' * y
+		designMat.at<float>(r3, 2 + 8) = designMat.at<float>(r2, 2 + 4) = designMat.at<float>(r1, 2) = -base.at<float>(3, i) * attach.at<float>(2, i);  // -t' * z
+		designMat.at<float>(r3, 3 + 8) = designMat.at<float>(r2, 3 + 4) = designMat.at<float>(r1, 3) = -base.at<float>(3, i) * attach.at<float>(3, i);  // -t' * w
 
 		// u' * x
-		designMat.at<float>(r1, 8)  = base.at<float>(0, i) * attach.at<float>(0, i);
-		designMat.at<float>(r1, 9)  = base.at<float>(0, i) * attach.at<float>(1, i);
-		designMat.at<float>(r1, 10) = base.at<float>(0, i) * attach.at<float>(2, i);
-		designMat.at<float>(r1, 11) = base.at<float>(0, i) * attach.at<float>(3, i);
+		designMat.at<float>(r1, 12) = base.at<float>(0, i) * attach.at<float>(0, i);
+		designMat.at<float>(r1, 13) = base.at<float>(0, i) * attach.at<float>(1, i);
+		designMat.at<float>(r1, 14) = base.at<float>(0, i) * attach.at<float>(2, i);
+		designMat.at<float>(r1, 15) = base.at<float>(0, i) * attach.at<float>(3, i);
 
 		// v' * x
-		designMat.at<float>(r2, 8)  = base.at<float>(1, i) * attach.at<float>(0, i);
-		designMat.at<float>(r2, 9)  = base.at<float>(1, i) * attach.at<float>(1, i);
-		designMat.at<float>(r2, 10) = base.at<float>(1, i) * attach.at<float>(2, i);
-		designMat.at<float>(r2, 11) = base.at<float>(1, i) * attach.at<float>(3, i);
+		designMat.at<float>(r2, 12) = base.at<float>(1, i) * attach.at<float>(0, i);
+		designMat.at<float>(r2, 13) = base.at<float>(1, i) * attach.at<float>(1, i);
+		designMat.at<float>(r2, 14) = base.at<float>(1, i) * attach.at<float>(2, i);
+		designMat.at<float>(r2, 15) = base.at<float>(1, i) * attach.at<float>(3, i);
+
+        // w' * x
+		designMat.at<float>(r3, 12) = base.at<float>(2, i) * attach.at<float>(0, i);
+		designMat.at<float>(r3, 13) = base.at<float>(2, i) * attach.at<float>(1, i);
+		designMat.at<float>(r3, 14) = base.at<float>(2, i) * attach.at<float>(2, i);
+		designMat.at<float>(r3, 15) = base.at<float>(2, i) * attach.at<float>(3, i);
 	}
 
 	return designMat;
