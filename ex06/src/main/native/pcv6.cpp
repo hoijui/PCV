@@ -40,6 +40,7 @@ int readMatchingPoints(string fname, Mat& x1, Mat& x2);
 int readControlPoints(string fname, Mat& x1, Mat& x2, Mat& Xm);
 void savePointList(string fname, Mat& points);
 void setSmallValuesToZero(Mat& mat);
+void savePointListOFF(string fname, Mat& points);
 float sumMembers(const Mat& mat);
 float absDifferenceSum(const Mat& mat1, const Mat& mat2);
 
@@ -85,6 +86,7 @@ int main(int argc, char** argv) {
 
 	// save reconstructed points to file
 	savePointList("projectiveReconstruction.asc", X);
+	savePointListOFF("projectiveReconstruction.off", X);
 
 	// read control points
 	// clean re-use of x1- and x2-matrices
@@ -109,6 +111,7 @@ int main(int argc, char** argv) {
 
 	// save reconstructed points to file
 	savePointList("euclidianReconstruction.asc", X_final);
+	savePointListOFF("euclidianReconstruction.off", X);
 
 	return 0;
 }
@@ -513,6 +516,46 @@ void setSmallValuesToZero(Mat& mat) {
 			}
 		}
 	}
+}
+
+void savePointListOFF(string fname, Mat& points) {
+
+	// open file for write
+	fstream file(fname.c_str(), ios::out);
+	if (!file) {
+		cerr << "ERROR: cannot open file " << fname << endl;
+		return;
+	}
+
+	// if homogeneous points: normalize
+	if (points.rows == 4) {
+		for (int i=0; i < points.cols; i++) {
+			points.at<float>(0, i) /= points.at<float>(3, i);
+			points.at<float>(1, i) /= points.at<float>(3, i);
+			points.at<float>(2, i) /= points.at<float>(3, i);
+			points.at<float>(3, i) /= points.at<float>(3, i);
+		}
+	}
+	setSmallValuesToZero(points);
+	file << "OFF" << endl;
+	file << points.cols << " 0" << " 0" << endl;
+	// write euclidian vertices
+	for (int i=0; i < points.cols; i++) {
+		file
+				<< points.at<float>(0, i) << ","
+				<< points.at<float>(1, i) << ","
+				<< points.at<float>(2, i) << endl;
+	}
+	// write faces (vertex indices)
+	/*for (int i=0; i < points.cols; i++) {
+		file
+				<< i << " "
+				<< (i + 1) % points.cols << " "
+				<< (i + 2) % points.cols << endl;
+	}*/
+
+	// close file
+	file.close();
 }
 
 float sumMembers(const Mat& mat) {
