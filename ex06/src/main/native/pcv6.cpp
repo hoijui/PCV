@@ -227,8 +227,9 @@ Mat linearTriangulation(Mat& P1, Mat& P2, Mat& x1, Mat& x2) {
 		Mat X_O = Mat::zeros(D, 1, P1.type());
 		SVD::solveZ(A, X_O);
 		// X_Os.col(pi) = X_O;
+        float w = X_O.at<float>(X_O.rows - 1, 0);
 		for (int i = 0; i < X_O.rows; ++i) {
-			X_Os.at<float>(i, pi) = X_O.at<float>(i, 0);
+			X_Os.at<float>(i, pi) = X_O.at<float>(i, 0) / w;  // prettier display
 		}
 	}
 
@@ -274,7 +275,7 @@ Mat homography3D(Mat& X1, Mat& X2) {
  */
 void decondition_homography3D(Mat& T_to, Mat& T_from, Mat& H) {
 
-	H = T_from.t() * H * T_to;
+	H = T_to.inv() * H * T_from;
 }
 
 /**
@@ -388,7 +389,7 @@ Mat getDesignMatrix_homography3D(Mat& fst, Mat& snd) {
 	Mat designMat = Mat::zeros(base.cols <= 5 ? 16 : base.cols * 3, 16, CV_32FC1);
 
 	for (int i = 0; i < base.cols; ++i) {
-		const int r1 = i * 2;
+		const int r1 = i * 3;
 		const int r2 = r1 + 1;
 		const int r3 = r1 + 2;
 
