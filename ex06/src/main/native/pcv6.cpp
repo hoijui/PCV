@@ -364,7 +364,7 @@ Mat getDesignMatrix_fundamental(Mat& fst, Mat& snd) {
 	}
 
 	// "Speed up for large rectangular matrices (i.e. m > 2n) by using A^T*A instead of A"; see pcv5_WS1213_DLT.pdf, page 25
-	if (design.rows > 2 * design.cols); { // FIXME ; too much
+	if (design.rows > 2 * design.cols) {
 		design = design.t() * design;
 	}
 
