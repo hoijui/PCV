@@ -46,8 +46,9 @@ float absDifferenceSum(const Mat& mat1, const Mat& mat2);
 // structure to fuse image data and window title
 struct winInfo {Mat img; string name;};
 
-// usage: path to image points in argv[1], path to control points in argv[2]
-// main function
+/**
+ * usage: path to image points in argv[1], path to control points in argv[2]
+ */
 int main(int argc, char** argv) {
 
 	// check if image paths were defined
@@ -112,12 +113,12 @@ int main(int argc, char** argv) {
 	return 0;
 }
 
-// calculates epipols from fundamental matrix
-/*
-F	the fundamental matrix
-e1	first epipol
-e2	second epipol
-*/
+/**
+ * calculates epipols from fundamental matrix
+ * @param F  the fundamental matrix
+ * @param e1  first epipol
+ * @param e2  second epipol
+ */
 void getEpipols(Mat& F, Mat& e1, Mat& e2) {
 
 	// # dimensions
@@ -136,11 +137,11 @@ void getEpipols(Mat& F, Mat& e1, Mat& e2) {
 	e2 = U.col(D-1); // last column
 }
 
-// generates skew matrix from vector
-/*
-e		given vector
-return		skew matrix
-*/
+/**
+ * generates skew matrix from vector
+ * @param e  given vector
+ * @return  skew matrix
+ */
 Mat makeSkewMatrix(Mat& e) {
 
 	// # dimensions
@@ -157,18 +158,18 @@ Mat makeSkewMatrix(Mat& e) {
 	return skew;
 }
 
-// generates 2 projection matrices by using fundamental matrix
-/*
-F	the fundamental matrix
-P1	first projection matrix (standard P matrix)
-P2	second projection matrix based on F
-*/
+/**
+ * generates 2 projection matrices by using fundamental matrix
+ * @param F  the fundamental matrix
+ * @param P1  first projection matrix (standard P matrix)
+ * @param P2  second projection matrix based on F
+ */
 void defineCameras(Mat& F, Mat& P1, Mat& P2) {
 
 	// # dimensions
 	const int D = F.rows; // 3
 
-    P1 = Mat::eye(D, D + 1, F.type());
+	P1 = Mat::eye(D, D + 1, F.type());
 
 	P2 = Mat::zeros(D, D + 1, F.type()); // 3 x 4 matrix
 	Mat e1;
@@ -176,19 +177,19 @@ void defineCameras(Mat& F, Mat& P1, Mat& P2) {
 	getEpipols(F, e1, e2);
 	P2.colRange(0, 3) = makeSkewMatrix(e2) * F;
 	// P2.col(3) = e2;
-    for(int i = 0; i < e2.rows; ++i)
-        P2.at<float>(i, 3) = e2.at<float>(i, 0);
-
+	for (int i = 0; i < e2.rows; ++i) {
+		P2.at<float>(i, 3) = e2.at<float>(i, 0);
+	}
 }
 
-// triangulates given set of image points based on projection matrices
-/*
-P1	projection matrix of first image
-P2	projection matrix of second image
-x1	image point set of first image
-x2	image point set of second image
-return	triangulated object points
-*/
+/**
+ * triangulates given set of image points based on projection matrices
+ * @param P1  projection matrix of first image
+ * @param P2  projection matrix of second image
+ * @param x1  image point set of first image
+ * @param x2  image point set of second image
+ * @return  triangulated object points
+ */
 Mat linearTriangulation(Mat& P1, Mat& P2, Mat& x1, Mat& x2) {
 
 	// number of point sets
@@ -223,19 +224,20 @@ Mat linearTriangulation(Mat& P1, Mat& P2, Mat& x1, Mat& x2) {
 		Mat X_O = Mat::zeros(D, 1, P1.type());
 		SVD::solveZ(A, X_O);
 		// X_Os.col(pi) = X_O;
-        for(int i = 0; i < X_O.rows; ++i)
-            X_Os.at<float>(i, pi) = X_O.at<float>(i, 0);
+		for (int i = 0; i < X_O.rows; ++i) {
+			X_Os.at<float>(i, pi) = X_O.at<float>(i, 0);
+		}
 	}
 
 	return X_Os;
 }
 
-// computes 3D homography
-/*
-X1	first set of points
-X2	second set of points
-H	computed homography
-*/
+/**
+ * computes 3D homography
+ * @param X1  first set of points
+ * @param X2  second set of points
+ * @param H  computed homography
+ */
 Mat homography3D(Mat& X1, Mat& X2) {
 
 	Mat& base = X1;
@@ -261,24 +263,23 @@ Mat homography3D(Mat& X1, Mat& X2) {
 	return H;
 }
 
-// decondition a homography that was estimated from conditioned point clouds
-/*
-T_to	conditioning matrix of first set of points
-T_from	conditioning matrix of second set of points
-H	conditioned homography that has to be un-conditioned (in-place)
-*/
+/**
+ * decondition a homography that was estimated from conditioned point clouds
+ * @param T_to	conditioning matrix of first set of points
+ * @param T_from	conditioning matrix of second set of points
+ * @param H	conditioned homography that has to be un-conditioned (in-place)
+ */
 void decondition_homography3D(Mat& T_to, Mat& T_from, Mat& H) {
 
 	H = T_from.t() * H * T_to;
-
 }
 
-// compute fundamental matrix
-/*
-fst	first set of points
-snd	second set of points
-return	the estimated fundamental matrix
-*/
+/**
+ * compute fundamental matrix
+ * @param fst  first set of points
+ * @param snd  second set of points
+ * @return  the estimated fundamental matrix
+ */
 Mat getFundamentalMatrix(Mat& fst, Mat& snd) {
 
 	// coordinate transformation matrices for conditioning
@@ -304,11 +305,11 @@ Mat getFundamentalMatrix(Mat& fst, Mat& snd) {
 	return F;
 }
 
-// solve homogeneous equation system by usage of SVD
-/*
-A		the design matrix
-return		the estimated fundamental matrix
-*/
+/**
+ * solve homogeneous equation system by usage of SVD
+ * @param A  the design matrix
+ * @return  the estimated fundamental matrix
+ */
 Mat solve_dlt(Mat& A) {
 
 	const int n = sqrt((float)A.cols);
@@ -317,23 +318,23 @@ Mat solve_dlt(Mat& A) {
 	return f.reshape(0, n);
 }
 
-// decondition a fundamental matrix that was estimated from conditioned point clouds
-/*
-T_fst	conditioning matrix of first set of points
-T_snd	conditioning matrix of second set of points
-F	conditioned fundamental matrix that has to be un-conditioned (in-place)
-*/
+/**
+ * decondition a fundamental matrix that was estimated from conditioned point clouds
+ * @param T_fst  conditioning matrix of first set of points
+ * @param T_snd  conditioning matrix of second set of points
+ * @param F  conditioned fundamental matrix that has to be un-conditioned (in-place)
+ */
 void decondition_fundamental(Mat& T_fst, Mat& T_snd, Mat& F) {
 
 	F = T_snd.t() * F * T_fst;
 }
 
-// define the design matrix as needed to compute fundamental matrix
-/*
-fst		first set of points
-snd		second set of points
-return		the design matrix to be computed
-*/
+/**
+ * define the design matrix as needed to compute fundamental matrix
+ * @param fst  first set of points
+ * @param snd  second set of points
+ * @return  the design matrix to be computed
+ */
 Mat getDesignMatrix_fundamental(Mat& fst, Mat& snd) {
 
 	// The design matrix has at least 9 rows in case of 8 points. If there are more points, the number of rows equals the number of points
@@ -359,33 +360,34 @@ Mat getDesignMatrix_fundamental(Mat& fst, Mat& snd) {
 		design.at<float>(i, 8) = 1;
 	}
 
-    // "Speed up for large rectangular matrices (i.e. m > 2n) by using A^T*A instead of A"; see pcv5_WS1213_DLT.pdf, page 25
-    if(design.rows > 2 * design.cols);
-        design = design.t() * design;
+	// "Speed up for large rectangular matrices (i.e. m > 2n) by using A^T*A instead of A"; see pcv5_WS1213_DLT.pdf, page 25
+	if (design.rows > 2 * design.cols); { // FIXME ; too much
+		design = design.t() * design;
+	}
 
 	return design;
 }
 
-// define the design matrix as needed to compute fundamental matrix
-/*
-fst	first set of points
-snd	second set of points
-A	the design matrix to be computed
-*/
+/**
+ * define the design matrix as needed to compute fundamental matrix
+ * @param fst  first set of points
+ * @param snd  second set of points
+ * @param A  the design matrix to be computed
+ */
 Mat getDesignMatrix_homography3D(Mat& fst, Mat& snd) {
 
 	const Mat& base = fst;
 	const Mat& attach = snd;
 
 	// design matrix: at least 5 points required ->
-    // size at least (16 x 16), if more points selected, then (3*#points x 16)
-    // see pcv7_WS1213_3Dhomo.pdf, page 14
+	// size at least (16 x 16), if more points selected, then (3*#points x 16)
+	// see pcv7_WS1213_3Dhomo.pdf, page 14
 	Mat designMat = Mat::zeros(base.cols <= 5 ? 16 : base.cols * 3, 16, CV_32FC1);
 
 	for (int i = 0; i < base.cols; ++i) {
 		const int r1 = i * 2;
 		const int r2 = r1 + 1;
-        const int r3 = r1 + 2;
+		const int r3 = r1 + 2;
 
 		// two times: -t' * x
 		designMat.at<float>(r3, 0 + 8) = designMat.at<float>(r2, 0 + 4) = designMat.at<float>(r1, 0) = -base.at<float>(3, i) * attach.at<float>(0, i);  // -t' * x
@@ -405,7 +407,7 @@ Mat getDesignMatrix_homography3D(Mat& fst, Mat& snd) {
 		designMat.at<float>(r2, 14) = base.at<float>(1, i) * attach.at<float>(2, i);
 		designMat.at<float>(r2, 15) = base.at<float>(1, i) * attach.at<float>(3, i);
 
-        // w' * x
+		// w' * x
 		designMat.at<float>(r3, 12) = base.at<float>(2, i) * attach.at<float>(0, i);
 		designMat.at<float>(r3, 13) = base.at<float>(2, i) * attach.at<float>(1, i);
 		designMat.at<float>(r3, 14) = base.at<float>(2, i) * attach.at<float>(2, i);
@@ -415,12 +417,12 @@ Mat getDesignMatrix_homography3D(Mat& fst, Mat& snd) {
 	return designMat;
 }
 
-// apply transformation to set of points
-/*
-H		matrix representing the transformation
-p		input points
-return		transformed points
-*/
+/**
+ * apply transformation to set of points
+ * @param H  matrix representing the transformation
+ * @param p  input points
+ * @return  transformed points
+ */
 Mat transform(Mat& H, Mat& p) {
 
 	return H * p;
@@ -461,30 +463,30 @@ static Mat getConditionXD(Mat& p) {
 	return cond;
 }
 
-// get the conditioning matrix of given points
-/*
-p		the points as matrix
-return		the condition matrix (already allocated)
-*/
+/**
+ * get the conditioning matrix of given points
+ * @param p  the points as matrix
+ * @return  the condition matrix (already allocated)
+ */
 Mat getCondition2D(Mat& p) {
 
 	return getConditionXD(p);
 }
 
-// get the conditioning matrix of given 3D points
-/*
-p	the points as matrix
-T	the condition matrix (already allocated)
-*/
+/**
+ * get the conditioning matrix of given 3D points
+ * @param p  the points as matrix
+ * @param T  the condition matrix (already allocated)
+ */
 Mat getCondition3D(Mat& p) {
 
 	return getConditionXD(p);
 }
 
-
-// enforce rank of 2 on fundamental matrix
+/**
+ * enforce rank of 2 on fundamental matrix
 /*
-F	the matrix to be changed
+F  the matrix to be changed
 */
 void forceSingularity(Mat& F) {
 
@@ -530,11 +532,11 @@ float absDifferenceSum(const Mat& mat1, const Mat& mat2) {
    *** Given Functions ***
    *********************** */
 
-// saves point list to file
-/*
-fname		file name
-points		matrix of points
-*/
+/**
+ * saves point list to file
+ * @param fname  file name
+ * @param points  matrix of points
+ */
 void savePointList(string fname, Mat& points) {
 
 	// open file for write
@@ -566,12 +568,12 @@ void savePointList(string fname, Mat& points) {
 	file.close();
 }
 
-// read homologeous points from file
-/*
-fname	path of file containing point list
-x1	pointer to matrix containing points of first image
-x2	pointer to matrix containing points of second image
-*/
+/**
+ * read homologeous points from file
+ * @param fname  path of file containing point list
+ * @param x1  pointer to matrix containing points of first image
+ * @param x2  pointer to matrix containing points of second image
+ */
 int readMatchingPoints(string fname, Mat& x1, Mat& x2) {
 
 	// open file
@@ -632,13 +634,13 @@ int readMatchingPoints(string fname, Mat& x1, Mat& x2) {
 	return numberOfPointPairs;
 }
 
-// read control points from file
-/*
-fname	path of file containing point list
-x1	pointer to matrix containing points of first image
-x2	pointer to matrix containing points of second image
-Xm	pointer to matrix containing object points
-*/
+/**
+ * read control points from file
+ * @param fname  path of file containing point list
+ * @param x1  pointer to matrix containing points of first image
+ * @param x2  pointer to matrix containing points of second image
+ * @param Xm  pointer to matrix containing object points
+ */
 int readControlPoints(string fname, Mat& x1, Mat& x2, Mat& Xm) {
 
 	// open file
