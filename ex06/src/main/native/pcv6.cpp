@@ -80,9 +80,9 @@ int main(int argc, char** argv) {
 	// linear triangulation of image points
 	// resulting projective reconstruction
 	Mat X = linearTriangulation(P1, P2, x1, x2);
-	for (int di = 0; di < X.cols; ++di) {
+	/*for (int di = 0; di < X.cols; ++di) {
 		cout << endl << "X(" << di << ")=" << X.col(di) << endl;
-	}
+	}*/
 
 	// save reconstructed points to file
 	savePointList("projectiveReconstruction.asc", X);
@@ -275,7 +275,7 @@ Mat homography3D(Mat& X1, Mat& X2) {
  */
 void decondition_homography3D(Mat& T_to, Mat& T_from, Mat& H) {
 
-	H = T_to.inv() * H * T_from;
+	H = T_from.inv() * H * T_to;
 }
 
 /**
@@ -380,45 +380,60 @@ Mat getDesignMatrix_fundamental(Mat& fst, Mat& snd) {
  */
 Mat getDesignMatrix_homography3D(Mat& fst, Mat& snd) {
 
-	const Mat& base = fst;
-	const Mat& attach = snd;
+    int n = fst.cols;
 
-	// design matrix: at least 5 points required ->
-	// size at least (16 x 16), if more points selected, then (3*#points x 16)
-	// see pcv7_WS1213_3Dhomo.pdf, page 14
-	Mat designMat = Mat::zeros(base.cols <= 5 ? 16 : base.cols * 3, 16, CV_32FC1);
+    //allocating a designmatrix
+    Mat designmatrix = Mat::zeros(3*n, 16, CV_32FC1);
 
-	for (int i = 0; i < base.cols; ++i) {
-		const int r1 = i * 3;
-		const int r2 = r1 + 1;
-		const int r3 = r1 + 2;
+    for(int i = 0; i < n; i++)
+    {
+        float x = fst.at<float>(0,i);
+        float y = fst.at<float>(1,i);
+        float z = fst.at<float>(2,i);
+        float w = fst.at<float>(3,i);
+        
+        float U = snd.at<float>(0,i);
+        float V = snd.at<float>(1,i);
+        float W = snd.at<float>(2,i);
+        float T = snd.at<float>(3,i);
+        
 
-		// two times: -t' * x
-		designMat.at<float>(r3, 0 + 8) = designMat.at<float>(r2, 0 + 4) = designMat.at<float>(r1, 0) = -base.at<float>(3, i) * attach.at<float>(0, i);  // -t' * x
-		designMat.at<float>(r3, 1 + 8) = designMat.at<float>(r2, 1 + 4) = designMat.at<float>(r1, 1) = -base.at<float>(3, i) * attach.at<float>(1, i);  // -t' * y
-		designMat.at<float>(r3, 2 + 8) = designMat.at<float>(r2, 2 + 4) = designMat.at<float>(r1, 2) = -base.at<float>(3, i) * attach.at<float>(2, i);  // -t' * z
-		designMat.at<float>(r3, 3 + 8) = designMat.at<float>(r2, 3 + 4) = designMat.at<float>(r1, 3) = -base.at<float>(3, i) * attach.at<float>(3, i);  // -t' * w
+        designmatrix.at<float>(i*3, 0) = -T*x;
+        designmatrix.at<float>(i*3, 1) = -T*y;
+        designmatrix.at<float>(i*3, 2) = -T*z;
+        designmatrix.at<float>(i*3, 3) = -T*w;
+        
+        designmatrix.at<float>(i*3, 12) = U*x;
+        designmatrix.at<float>(i*3, 13) = U*y;
+        designmatrix.at<float>(i*3, 14) = U*z;
+        designmatrix.at<float>(i*3, 15) = U*w;
+        
+        //second row
+        
+        designmatrix.at<float>(i*3+1, 4) = -T*x;
+        designmatrix.at<float>(i*3+1, 5) = -T*y;
+        designmatrix.at<float>(i*3+1, 6) = -T*z;
+        designmatrix.at<float>(i*3+1, 7) = -T*w;
+        
+        designmatrix.at<float>(i*3+1, 12) = V*x;
+        designmatrix.at<float>(i*3+1, 13) = V*y;
+        designmatrix.at<float>(i*3+1, 14) = V*z;
+        designmatrix.at<float>(i*3+1, 15) = V*w;
 
-		// u' * x
-		designMat.at<float>(r1, 12) = base.at<float>(0, i) * attach.at<float>(0, i);
-		designMat.at<float>(r1, 13) = base.at<float>(0, i) * attach.at<float>(1, i);
-		designMat.at<float>(r1, 14) = base.at<float>(0, i) * attach.at<float>(2, i);
-		designMat.at<float>(r1, 15) = base.at<float>(0, i) * attach.at<float>(3, i);
-
-		// v' * x
-		designMat.at<float>(r2, 12) = base.at<float>(1, i) * attach.at<float>(0, i);
-		designMat.at<float>(r2, 13) = base.at<float>(1, i) * attach.at<float>(1, i);
-		designMat.at<float>(r2, 14) = base.at<float>(1, i) * attach.at<float>(2, i);
-		designMat.at<float>(r2, 15) = base.at<float>(1, i) * attach.at<float>(3, i);
-
-		// w' * x
-		designMat.at<float>(r3, 12) = base.at<float>(2, i) * attach.at<float>(0, i);
-		designMat.at<float>(r3, 13) = base.at<float>(2, i) * attach.at<float>(1, i);
-		designMat.at<float>(r3, 14) = base.at<float>(2, i) * attach.at<float>(2, i);
-		designMat.at<float>(r3, 15) = base.at<float>(2, i) * attach.at<float>(3, i);
-	}
-
-	return designMat;
+        //third row
+        
+        designmatrix.at<float>(i*3+2, 8) = -T*x;
+        designmatrix.at<float>(i*3+2, 9) = -T*y;
+        designmatrix.at<float>(i*3+2, 10) = -T*z;
+        designmatrix.at<float>(i*3+2, 11) = -T*w;
+        designmatrix.at<float>(i*3+2, 12) = W*x;
+        designmatrix.at<float>(i*3+2, 13) = W*y;
+        designmatrix.at<float>(i*3+2, 14) = W*z;
+        designmatrix.at<float>(i*3+2, 15) = W*w;
+    }
+    //cout << "DESIGMATRIX_H" << endl;
+    //cout << designmatrix << endl;
+    return designmatrix;
 }
 
 /**
