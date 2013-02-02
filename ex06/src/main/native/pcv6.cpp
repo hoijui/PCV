@@ -489,9 +489,8 @@ Mat getCondition3D(Mat& p) {
 
 /**
  * enforce rank of 2 on fundamental matrix
-/*
-F  the matrix to be changed
-*/
+ * @param F  the matrix to be changed
+ */
 void forceSingularity(Mat& F) {
 
 	Mat U(3, 3, CV_32FC1);
